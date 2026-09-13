@@ -1,2 +1,2 @@
-# Quespot_FE
-Quespot Frontend Repo
+# CHURAI_FE
+CHURAI Frontend Repo
