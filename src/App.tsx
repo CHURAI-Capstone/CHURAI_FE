@@ -1,6 +1,6 @@
 import { AppProviders } from '@/app/AppProviders'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { HomePage } from '@/pages/HomePage'
+import { HomePage } from '@/pages/home/HomePage'
 
 export function App() {
   return (
