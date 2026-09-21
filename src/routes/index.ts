@@ -1,3 +1,1 @@
-export const routePaths = {
-  home: '/',
-} as const
+export { routePaths } from '@/routes/paths'
