@@ -1,13 +1,12 @@
+import { RouterProvider } from 'react-router-dom'
+
 import { AppProviders } from '@/app/AppProviders'
-import { AppLayout } from '@/components/layout/AppLayout'
-import { HomePage } from '@/pages/HomePage'
+import { router } from '@/routes'
 
 export function App() {
   return (
     <AppProviders>
-      <AppLayout>
-        <HomePage />
-      </AppLayout>
+      <RouterProvider router={router} />
     </AppProviders>
   )
 }
