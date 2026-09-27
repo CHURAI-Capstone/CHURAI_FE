@@ -1,16 +1,27 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/AppLayout'
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { HomePage } from '@/pages/home/HomePage'
+import { LoginPage } from '@/pages/login/LoginPage'
 import { routePaths } from '@/routes/paths'
 
 export const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    path: routePaths.login,
+    element: <LoginPage />,
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
       {
-        path: routePaths.home,
-        element: <HomePage />,
+        element: <AppLayout />,
+        children: [
+          {
+            path: routePaths.home,
+            element: <HomePage />,
+          },
+        ],
       },
     ],
   },
