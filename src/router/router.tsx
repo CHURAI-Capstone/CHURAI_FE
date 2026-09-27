@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/login/LoginPage'
-import { routePaths } from '@/routes/paths'
+import { routePaths } from '@/router/paths'
 
 export const router = createBrowserRouter([
   {

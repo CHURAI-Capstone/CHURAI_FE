@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { routePaths } from '@/routes/paths'
+import { routePaths } from '@/router/paths'
 import type { ApiErrorResponse } from '@/types/api'
 
 interface LoginLocationState {

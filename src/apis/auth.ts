@@ -1,4 +1,4 @@
-import { apiClient } from '@/api/http'
+import { apiClient } from '@/apis/http'
 import type { LoginRequest, LoginResult } from '@/features/auth/auth.types'
 import type { ApiResponse } from '@/types/api'
 

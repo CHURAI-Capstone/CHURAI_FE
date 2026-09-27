@@ -5,7 +5,7 @@ import {
 } from 'react-router-dom'
 
 import { useAuth } from '@/features/auth/useAuth'
-import { routePaths } from '@/routes/paths'
+import { routePaths } from '@/router/paths'
 
 export function ProtectedRoute() {
   const location = useLocation()

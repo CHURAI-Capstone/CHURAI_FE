@@ -1,6 +1,6 @@
 import { useState, type PropsWithChildren } from 'react'
 
-import { login as requestLogin } from '@/api/auth'
+import { login as requestLogin } from '@/apis/auth'
 import { AuthContext } from '@/features/auth/auth.context'
 import type { LoginRequest } from '@/features/auth/auth.types'
 import {

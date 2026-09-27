@@ -1,33 +1,102 @@
-@import "tailwindcss";
+/* globals.css */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import 'tailwindcss';
 
 @theme {
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
-  --color-surface: #ffffff;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-subtle: #eef2ff;
-  --color-primary-foreground: #ffffff;
-  --color-ring: #6366f1;
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.16);
-  --font-sans: Pretendard, "Noto Sans KR", Inter, ui-sans-serif, system-ui, sans-serif;
+  /* Font */
+  --font-pretendard: 'Pretendard', sans-serif;
+
+  /* Color */
+  --color-main: #fd4a12;
+  --color-sub: #ffede7;
+
+  --color-black: #0a0a0a;
+  --color-white: #ffffff;
+
+  --color-gray1: #f4f5f6;
+  --color-gray2: #cdd1d5;
+  --color-gray3: #8a949e;
+  --color-gray4: #464c53;
+
+  /* Radius */
+  --radius-small1: 4px;
+  --radius-medium4: 8px;
 }
 
-@layer base {
-  *, ::before, ::after { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    min-width: 320px;
-    min-height: 100dvh;
-    background: var(--color-background);
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
+/* Reset / Global */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-pretendard);
+  color: var(--color-black);
+  background-color: var(--color-white);
+}
+
+/* Typography */
+@layer utilities {
+  .heading1-medium {
+    @apply font-pretendard text-[20px] leading-[150%] font-medium;
   }
-  button, input, textarea, select { font: inherit; }
+
+  .heading1-regular {
+    @apply font-pretendard text-[20px] leading-[150%] font-normal;
+  }
+
+  .heading1-semibold {
+    @apply font-pretendard text-[20px] leading-[150%] font-semibold;
+  }
+
+  .body1-semibold {
+    @apply font-pretendard text-[18px] leading-[150%] font-semibold;
+  }
+
+  .body1-medium {
+    @apply font-pretendard text-[18px] leading-[150%] font-medium;
+  }
+
+  .body1-regular {
+    @apply font-pretendard text-[18px] leading-[150%] font-normal;
+  }
+
+  .body2-semibold {
+    @apply font-pretendard text-[16px] leading-[150%] font-semibold;
+  }
+
+  .body2-medium {
+    @apply font-pretendard text-[16px] leading-[150%] font-medium;
+  }
+
+  .body2-regular {
+    @apply font-pretendard text-[16px] leading-[150%] font-normal;
+  }
+
+  .caption1-semibold {
+    @apply font-pretendard text-[14px] leading-[150%] font-semibold;
+  }
+
+  .caption1-medium {
+    @apply font-pretendard text-[14px] leading-[150%] font-medium;
+  }
+
+  .caption1-regular {
+    @apply font-pretendard text-[14px] leading-[150%] font-normal;
+  }
+
+  .caption2-medium {
+    @apply font-pretendard text-[12px] leading-[150%] font-medium;
+  }
+
+  .caption2-regular {
+    @apply font-pretendard text-[12px] leading-[150%] font-normal;
+  }
 }
