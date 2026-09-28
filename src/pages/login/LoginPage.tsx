@@ -7,6 +7,7 @@ import {
   useNavigate,
 } from 'react-router-dom'
 
+import Logo from '@/assets/icons/logo.svg?react'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -93,9 +94,10 @@ export function LoginPage() {
         <div className="mb-12 text-center">
           <Link
             to={routePaths.home}
-            className="inline-block text-[38px] font-extrabold tracking-[-0.04em] text-[#FD4A12]"
+            className="inline-flex text-[#FD4A12]"
+            aria-label="츄라이 홈"
           >
-            CHURAI
+            <Logo className="h-14 w-auto" />
           </Link>
 
           <p className="mt-3 text-sm text-gray-500">
