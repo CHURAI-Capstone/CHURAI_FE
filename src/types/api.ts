@@ -1,4 +1,13 @@
-export interface ApiErrorResponse {
+export interface ApiResponse<T> {
+  isSuccess: boolean
+  code: string
   message: string
+  result: T | null
+}
+
+export interface ApiErrorResponse {
+  isSuccess?: boolean
   code?: string
+  message: string
+  result?: unknown
 }
