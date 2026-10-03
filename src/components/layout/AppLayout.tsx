@@ -4,9 +4,9 @@ import {
   useNavigate,
 } from 'react-router-dom'
 
-import CreateButton from '@/assets/icons/create-button.svg'
-import Logo from '@/assets/icons/logo.svg'
-import SearchIcon from '@/assets/icons/search.svg'
+import CreateButton from '@/assets/icons/create-button.svg?react'
+import Logo from '@/assets/icons/logo.svg?react'
+import SearchIcon from '@/assets/icons/search.svg?react'
 
 const HIDE_FAB_PREFIXES = [
   '/boardCreate',
@@ -32,7 +32,7 @@ export function AppLayout() {
     >
       <header className="bg-main relative mb-6 flex h-14 items-center justify-center text-white">
         <Logo
-          className="h-9 cursor-pointer"
+          className="h-9 cursor-pointer text-white"
           onClick={() => navigate('/')}
         />
 
