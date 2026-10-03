@@ -1,4 +1,6 @@
-import axios from 'axios'
+import axios, {
+  type InternalAxiosRequestConfig,
+} from 'axios'
 
 import { env } from '@/constants/env'
 import {
@@ -24,7 +26,9 @@ export const fileApi = axios.create({
   },
 })
 
-const attachAuthHeader = (config: InternalRequestConfig) => {
+const attachAuthHeader = (
+  config: InternalAxiosRequestConfig,
+) => {
   const accessToken = getAccessToken()
 
   if (accessToken) {
@@ -41,12 +45,6 @@ const handleUnauthorizedResponse = (error: unknown) => {
 
   return Promise.reject(error)
 }
-
-type InternalRequestConfig = Parameters<
-  typeof api.interceptors.request.use
->[0] extends (config: infer Config) => unknown
-  ? Config
-  : never
 
 api.interceptors.request.use(attachAuthHeader)
 fileApi.interceptors.request.use(attachAuthHeader)
