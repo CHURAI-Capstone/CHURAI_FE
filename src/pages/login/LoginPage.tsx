@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import {
   Link,
   Navigate,
+  useLocation,
   useNavigate,
 } from 'react-router-dom'
 
@@ -10,6 +11,10 @@ import Logo from '@/assets/icons/logo.svg?react'
 import { useAuth } from '@/features/auth/useAuth'
 import { routePaths } from '@/router/paths'
 import type { ApiErrorResponse } from '@/types/api'
+
+interface LoginLocationState {
+  from?: string
+}
 
 function getLoginErrorMessage(error: unknown) {
   if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -28,6 +33,7 @@ function getLoginErrorMessage(error: unknown) {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated, login } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -35,8 +41,11 @@ export function LoginPage() {
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const locationState = location.state as LoginLocationState | null
+  const redirectPath = locationState?.from ?? routePaths.home
+
   if (isAuthenticated) {
-    return <Navigate to={routePaths.home} replace />
+    return <Navigate to={redirectPath} replace />
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -57,7 +66,7 @@ export function LoginPage() {
         email: normalizedEmail,
         password: normalizedPassword,
       })
-      navigate(routePaths.home, {
+      navigate(redirectPath, {
         replace: true,
       })
     } catch (error) {
