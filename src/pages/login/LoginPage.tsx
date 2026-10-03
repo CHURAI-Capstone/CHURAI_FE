@@ -1,9 +1,13 @@
 import axios from 'axios'
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import {
+  Link,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom'
 
-import { login } from '@/apis/auth'
 import Logo from '@/assets/icons/logo.svg?react'
+import { useAuth } from '@/features/auth/useAuth'
 import { routePaths } from '@/router/paths'
 import type { ApiErrorResponse } from '@/types/api'
 
@@ -24,11 +28,16 @@ function getLoginErrorMessage(error: unknown) {
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { isAuthenticated, login } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (isAuthenticated) {
+    return <Navigate to={routePaths.home} replace />
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
