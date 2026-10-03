@@ -1,14 +1,13 @@
-import { apiClient } from '@/apis/http'
+import { api } from '@/apis/http'
 import type { LoginRequest, LoginResult } from '@/features/auth/auth.types'
 import type { ApiResponse } from '@/types/api'
 
 const AUTH_ENDPOINTS = {
-  // TODO: 백엔드 로그인 API 명세 확정 후 endpoint 확인
-  login: '/auth/login',
+  login: '/v1/auth/login',
 } as const
 
 export async function login(request: LoginRequest): Promise<LoginResult> {
-  const { data } = await apiClient.post<ApiResponse<LoginResult>>(
+  const { data } = await api.post<ApiResponse<LoginResult>>(
     AUTH_ENDPOINTS.login,
     request,
   )
