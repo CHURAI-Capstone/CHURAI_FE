@@ -49,7 +49,7 @@ export function AppLayout() {
         </button>
 
         <Logo
-          className="h-9 cursor-pointer"
+          className="h-9 cursor-pointer text-white"
           onClick={() => navigate(routePaths.home)}
         />
 
