@@ -2,6 +2,8 @@ export const routePaths = {
   home: '/',
   login: '/login',
   signup: '/signup',
+  search: '/search',
+  boardCreate: '/boardCreate',
   posts: '/posts',
   postDetail: '/posts/:postId',
   postCreate: '/posts/new',

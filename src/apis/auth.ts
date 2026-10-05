@@ -8,7 +8,7 @@ import type {
 import type { ApiResponse } from '@/types/api'
 
 const AUTH_ENDPOINTS = {
-  login: '/auth/login',
+  login: '/v1/auth/login',
   signup: '/auth/signup',
 } as const
 
