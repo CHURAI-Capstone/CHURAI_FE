@@ -1,28 +1,33 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
-import Logo from '@/assets/icons/logo.svg?react'
+import { signup } from '@/apis/auth'
 import { Button } from '@/components/ui/Button'
+import {
+  AuthFeedback,
+  AuthField,
+  AuthLayout,
+} from '@/features/auth/components'
+import { getAuthErrorMessage } from '@/features/auth/getAuthErrorMessage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { routePaths } from '@/router/paths'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
 export function SignupPage() {
   useDocumentTitle('회원가입 | CHURAI')
+  const navigate = useNavigate()
 
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
-    setSuccessMessage('')
 
     const normalizedNickname = nickname.trim()
     const normalizedEmail = email.trim()
@@ -32,8 +37,8 @@ export function SignupPage() {
       return
     }
 
-    if (normalizedNickname.length < 2 || normalizedNickname.length > 12) {
-      setErrorMessage('닉네임은 2자 이상 12자 이하로 입력해주세요.')
+    if (normalizedNickname.length > 20) {
+      setErrorMessage('닉네임은 20자 이하로 입력해주세요.')
       return
     }
 
@@ -42,8 +47,13 @@ export function SignupPage() {
       return
     }
 
-    if (!PASSWORD_PATTERN.test(password)) {
-      setErrorMessage('비밀번호는 영문과 숫자를 포함해 8자 이상 입력해주세요.')
+    if (normalizedEmail.length > 100) {
+      setErrorMessage('이메일은 100자 이하로 입력해주세요.')
+      return
+    }
+
+    if (password.length < 8 || password.length > 64) {
+      setErrorMessage('비밀번호는 8자 이상 64자 이하로 입력해주세요.')
       return
     }
 
@@ -52,120 +62,101 @@ export function SignupPage() {
       return
     }
 
-    setSuccessMessage('입력 정보가 확인되었습니다.')
+    try {
+      setIsSubmitting(true)
+      await signup({
+        email: normalizedEmail,
+        password,
+        nickname: normalizedNickname,
+      })
+      navigate(routePaths.login, {
+        replace: true,
+        state: { message: '회원가입이 완료되었습니다. 로그인해주세요.' },
+      })
+    } catch (error) {
+      setErrorMessage(
+        getAuthErrorMessage(
+          error,
+          '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        ),
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const inputClassName = 'h-13 w-full rounded-lg border border-[#CDD1D5] bg-white px-4 text-[15px] text-[#0A0A0A] outline-none transition placeholder:text-[#8A949E] focus:border-[#FD4A12] focus:ring-3 focus:ring-[#FD4A12]/10'
-  const labelClassName = 'mb-2 block text-sm font-semibold text-[#464C53]'
-
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-white px-5 py-10">
-      <section className="w-full max-w-[430px]">
-        <div className="mb-12 text-center">
-          <Link
-            to={routePaths.home}
-            className="inline-flex text-[#FD4A12]"
-            aria-label="츄라이 홈"
-          >
-            <Logo className="h-14 w-auto" />
-          </Link>
-
-          <p className="mt-3 text-sm text-gray-500">
-            비주류라고? 일단 츄라이!
-          </p>
-        </div>
-
-        <div>
-          <h1 className="text-[26px] font-bold tracking-tight text-[#0A0A0A]">
-            회원가입
-          </h1>
-
-          <p className="mt-2 text-sm text-[#8A949E]">
-            츄라이와 함께 새로운 꿀조합을 찾아보세요.
-          </p>
-        </div>
-
+    <AuthLayout title="회원가입" description="츄라이와 함께 새로운 꿀조합을 찾아보세요.">
         <form className="mt-8 flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
-          <div>
-            <label htmlFor="nickname" className={labelClassName}>닉네임</label>
-            <input
-              id="nickname"
-              type="text"
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              placeholder="닉네임을 입력해주세요."
-              autoComplete="nickname"
-              className={inputClassName}
-            />
-          </div>
+          <AuthField
+            id="nickname"
+            label="닉네임"
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+            placeholder="닉네임을 입력해주세요."
+            autoComplete="nickname"
+            maxLength={20}
+            disabled={isSubmitting}
+          />
 
-          <div>
-            <label htmlFor="signup-email" className={labelClassName}>이메일</label>
-            <input
-              id="signup-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="이메일을 입력해주세요."
-              autoComplete="email"
-              className={inputClassName}
-            />
-          </div>
+          <AuthField
+            id="signup-email"
+            label="이메일"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="이메일을 입력해주세요."
+            autoComplete="email"
+            maxLength={100}
+            disabled={isSubmitting}
+          />
 
-          <div>
-            <label htmlFor="signup-password" className={labelClassName}>비밀번호</label>
-            <input
-              id="signup-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="영문, 숫자 포함 8자 이상 입력해주세요."
-              autoComplete="new-password"
-              className={inputClassName}
-            />
-          </div>
+          <AuthField
+            id="signup-password"
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="8자 이상 64자 이하로 입력해주세요."
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={64}
+            disabled={isSubmitting}
+          />
 
-          <div>
-            <label htmlFor="password-confirm" className={labelClassName}>비밀번호 확인</label>
-            <input
-              id="password-confirm"
-              type="password"
-              value={passwordConfirm}
-              onChange={(event) => setPasswordConfirm(event.target.value)}
-              placeholder="비밀번호를 다시 입력해주세요."
-              autoComplete="new-password"
-              className={inputClassName}
-            />
-          </div>
+          <AuthField
+            id="password-confirm"
+            label="비밀번호 확인"
+            type="password"
+            value={passwordConfirm}
+            onChange={(event) => setPasswordConfirm(event.target.value)}
+            placeholder="비밀번호를 다시 입력해주세요."
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={64}
+            disabled={isSubmitting}
+          />
 
           {errorMessage && (
-            <p role="alert" className="rounded-lg bg-[#FFEDE7] px-4 py-3 text-sm font-medium text-[#FD4A12]">
-              {errorMessage}
-            </p>
-          )}
-
-          {successMessage && (
-            <p role="status" className="rounded-lg bg-[#FFEDE7] px-4 py-3 text-sm font-medium text-[#FD4A12]">
-              {successMessage}
-            </p>
+            <AuthFeedback>{errorMessage}</AuthFeedback>
           )}
 
           <Button
             type="submit"
             size="lg"
-            className="mt-2 w-full bg-[#FD4A12] text-white hover:bg-[#FD4A12]/90"
+            disabled={isSubmitting}
+            className="mt-2 w-full bg-main text-white hover:bg-main/90"
           >
-            회원가입
+            {isSubmitting ? '가입 중...' : '회원가입'}
           </Button>
         </form>
 
         <div className="mt-7 flex items-center justify-center gap-2 text-sm">
-          <span className="text-[#8A949E]">이미 회원이신가요?</span>
-          <Link to={routePaths.login} className="font-semibold text-[#FD4A12] hover:underline">
+          <span className="text-gray3">이미 회원이신가요?</span>
+          <Link to={routePaths.login} className="font-semibold text-main hover:underline">
             로그인
           </Link>
         </div>
-      </section>
-    </main>
+    </AuthLayout>
   )
 }
