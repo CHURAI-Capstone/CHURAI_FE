@@ -10,9 +10,7 @@ interface ApiResponse<T> {
 export interface CreatePostRequest {
   title: string
   contents: string
-  nickname: string
-  password: string
-  category: 'MAIN_DISH' | 'DESSERT'
+  category: 'MEAL' | 'DESSERT'
   images: File[]
   tags: string[]
 }
@@ -68,8 +66,6 @@ export const createPost = async (
 
   formData.append('title', requestBody.title)
   formData.append('contents', requestBody.contents)
-  formData.append('nickname', requestBody.nickname)
-  formData.append('password', requestBody.password)
   formData.append('category', requestBody.category)
 
   if (requestBody.tags.length !== 0) {
