@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { createPost } from '@/apis/board/boardApi'
@@ -117,7 +124,9 @@ export function BoardCreatePage() {
     event.preventDefault()
     setMessage('')
 
-    if (!isFormValid || category === '') {
+    const selectedCategory = category
+
+    if (!isFormValid || !selectedCategory) {
       setMessage('필수 항목을 모두 입력해주세요.')
       return
     }
@@ -127,7 +136,7 @@ export function BoardCreatePage() {
       const data = await createPost({
         title: title.trim(),
         contents: contents.trim(),
-        category,
+        category: selectedCategory,
         images: imagePreviews.map((preview) => preview.file),
         tags,
       })
