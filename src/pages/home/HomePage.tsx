@@ -15,7 +15,7 @@ import {
 import type { PostDetailResponse } from '@/apis/board/boardApi'
 
 const CATEGORY_LABEL: Record<string, string> = {
-  MEAL: '식사',
+  MAIN_DISH: '식사',
   DESSERT: '디저트',
 }
 

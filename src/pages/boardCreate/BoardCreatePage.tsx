@@ -15,7 +15,7 @@ import SnackIcon from '@/assets/icons/snacks.svg?react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { routePaths } from '@/router/paths'
 
-type PostCategory = 'MEAL' | 'DESSERT'
+type PostCategory = 'MAIN_DISH' | 'DESSERT'
 
 interface ImagePreview {
   file: File
@@ -137,8 +137,6 @@ export function BoardCreatePage() {
         title: title.trim(),
         contents: contents.trim(),
         category: selectedCategory,
-        images: imagePreviews.map((preview) => preview.file),
-        tags,
       })
 
       window.alert('레시피 작성이 완료되었습니다.')
@@ -195,10 +193,10 @@ export function BoardCreatePage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setCategory('MEAL')}
+                onClick={() => setCategory('MAIN_DISH')}
                 disabled={isSubmitting}
                 className={`caption2-medium flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full border text-black transition-colors ${
-                  category === 'MEAL'
+                  category === 'MAIN_DISH'
                     ? 'border-main bg-sub font-semibold'
                     : 'border-gray-200 bg-white'
                 }`}
