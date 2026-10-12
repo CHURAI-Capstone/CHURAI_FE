@@ -1,4 +1,4 @@
-import { api, fileApi } from '@/apis/http'
+import { api } from '@/apis/http'
 
 interface ApiResponse<T> {
   code: string
@@ -10,27 +10,56 @@ interface ApiResponse<T> {
 export interface CreatePostRequest {
   title: string
   contents: string
-  nickname: string
-  password: string
   category: 'MAIN_DISH' | 'DESSERT'
-  images: File[]
-  tags: string[]
 }
 
 export interface UpdatePostRequest {
-  title?: string
-  contents?: string
-  category?: 'MAIN_DISH' | 'DESSERT'
-  imageUrls?: string[]
-  tags?: string[]
+  title: string
+  contents: string
+  category: 'MAIN_DISH' | 'DESSERT'
+}
+
+interface PostSummaryResponse {
+  postId: number
+  title: string
+  category: 'MAIN_DISH' | 'DESSERT'
+  views: number
+  writerId: number
+  writerNickname: string
+  createdAt: string
+}
+
+interface PostPageResponse {
+  posts: PostSummaryResponse[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  hasNext: boolean
+}
+
+interface PostSaveResponse {
+  postId: number
+}
+
+interface PostDetailApiResponse {
+  postId: number
+  title: string
+  contents: string
+  category: 'MAIN_DISH' | 'DESSERT'
+  views: number
+  writerId: number
+  writerNickname: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PostDetailResponse {
   id: number
-  category: string
+  category: 'MAIN_DISH' | 'DESSERT'
   title: string
   nickname: string
-  thumbnailUrl: string
+  thumbnailUrl?: string
   tags: string[]
   interestedCount: number
   churaiCount: number
@@ -64,83 +93,61 @@ export interface CommentResponse {
 export const createPost = async (
   requestBody: CreatePostRequest,
 ) => {
-  const formData = new FormData()
-
-  formData.append('title', requestBody.title)
-  formData.append('contents', requestBody.contents)
-  formData.append('nickname', requestBody.nickname)
-  formData.append('password', requestBody.password)
-  formData.append('category', requestBody.category)
-
-  if (requestBody.tags.length !== 0) {
-    requestBody.tags.forEach((tag) => {
-      formData.append('tags', tag)
-    })
-  }
-
-  if (requestBody.images.length !== 0) {
-    requestBody.images.forEach((file) => {
-      formData.append('images', file)
-    })
-  }
-
-  const response = await fileApi.post(
+  const response = await api.post<ApiResponse<PostSaveResponse>>(
     '/posts',
-    formData,
+    requestBody,
   )
 
-  return response.data.result
+  return {
+    id: response.data.result.postId,
+  }
 }
 
 export const getPostList = async () => {
-  const response =
-    await api.get<ApiResponse<PostDetailResponse[]>>(
-      '/posts',
-    )
+  const response = await api.get<ApiResponse<PostPageResponse>>(
+    '/posts',
+  )
 
-  return response.data.result
+  return response.data.result.posts.map(toPostDetailResponse)
 }
 
 export const getPostDetail = async (
   postId: string,
 ) => {
-  const response =
-    await api.get<ApiResponse<PostDetailResponse>>(
-      `/posts/${postId}`,
-    )
+  const response = await api.get<ApiResponse<PostDetailApiResponse>>(
+    `/posts/${postId}`,
+  )
 
-  return response.data.result
+  return toPostDetailResponse(response.data.result)
 }
 
 export const updatePost = async (
   postId: string,
   requestBody: UpdatePostRequest,
 ) => {
-  const response = await api.patch<
-    ApiResponse<{ id: number }>
+  const response = await api.put<
+    ApiResponse<PostDetailApiResponse>
   >(`/posts/${postId}`, requestBody)
 
-  return response.data.result
+  return toPostDetailResponse(response.data.result)
 }
 
 export const getPostRanking = async () => {
-  const response =
-    await api.get<ApiResponse<PostDetailResponse[]>>(
-      '/posts/ranking',
-    )
+  const response = await api.get<ApiResponse<PostPageResponse>>(
+    '/posts?size=3',
+  )
 
-  return response.data.result
+  return response.data.result.posts.map(toPostDetailResponse)
 }
 
 export const searchPosts = async (
   keyword: string,
 ) => {
-  const response =
-    await api.get<ApiResponse<PostDetailResponse[]>>(
-      `/posts/search?keyword=${encodeURIComponent(keyword)}`,
-    )
+  const response = await api.get<ApiResponse<PostPageResponse>>(
+    `/posts?keyword=${encodeURIComponent(keyword)}`,
+  )
 
-  return response.data.result
+  return response.data.result.posts.map(toPostDetailResponse)
 }
 
 export const createComment = async (
@@ -171,4 +178,25 @@ export const getComments = async (
     )
 
   return response.data.result
+}
+
+function toPostDetailResponse(
+  post: PostSummaryResponse | PostDetailApiResponse,
+): PostDetailResponse {
+  return {
+    id: post.postId,
+    category: post.category,
+    title: post.title,
+    nickname: post.writerNickname,
+    thumbnailUrl: undefined,
+    tags: [],
+    interestedCount: 0,
+    churaiCount: 0,
+    commentCount: 0,
+    views: post.views,
+    createdAt: post.createdAt,
+    contents: 'contents' in post ? post.contents : undefined,
+    imageUrls: [],
+    comments: [],
+  }
 }
