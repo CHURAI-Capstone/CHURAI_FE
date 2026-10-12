@@ -12,6 +12,7 @@ import { createPost } from '@/apis/board/boardApi'
 import BowlIcon from '@/assets/icons/boul.svg?react'
 import ImageIcon from '@/assets/icons/image.svg?react'
 import SnackIcon from '@/assets/icons/snacks.svg?react'
+import { getAuthErrorMessage } from '@/features/auth/getAuthErrorMessage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { routePaths } from '@/router/paths'
 
@@ -133,22 +134,21 @@ export function BoardCreatePage() {
 
     try {
       setIsSubmitting(true)
-      const data = await createPost({
+      await createPost({
         title: title.trim(),
         contents: contents.trim(),
         category: selectedCategory,
       })
 
       window.alert('레시피 작성이 완료되었습니다.')
-
-      if (data?.id) {
-        navigate(`/boardDetail/${data.id}`)
-        return
-      }
-
       navigate(routePaths.home)
-    } catch {
-      setMessage('레시피 작성에 실패했습니다. 잠시 후 다시 시도해주세요.')
+    } catch (error) {
+      setMessage(
+        getAuthErrorMessage(
+          error,
+          '레시피 작성에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        ),
+      )
     } finally {
       setIsSubmitting(false)
     }
