@@ -88,10 +88,10 @@ export function HomePage() {
                   title={item.title}
                   imageSrc={item.thumbnailUrl}
                   likes={item.interestedCount}
-                  views={item.views}
+                  views={item.views ?? 0}
                   shares={item.churaiCount}
                   onClick={() =>
-                    navigate(`/boardDetail/${item.id}`)
+                    navigate(`/posts/${item.id}`)
                   }
                 />
               </SwiperSlide>
@@ -128,10 +128,10 @@ export function HomePage() {
               nickname={item.nickname}
               title={item.title}
               heungMiCount={item.interestedCount}
-              viewCount={item.views}
+              viewCount={item.views ?? 0}
               churaiCount={item.churaiCount}
               onClick={() =>
-                navigate(`/boardDetail/${item.id}`)
+                navigate(`/posts/${item.id}`)
               }
             />
           ))}
