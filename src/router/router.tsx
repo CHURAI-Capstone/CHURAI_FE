@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { BoardCreatePage } from '@/pages/boardCreate/BoardCreatePage'
+import { BoardDetailPage } from '@/pages/boardDetail/BoardDetailPage'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/login/LoginPage'
 import { SignupPage } from '@/pages/signup/SignupPage'
@@ -16,6 +17,10 @@ export const router = createBrowserRouter([
   {
     path: routePaths.signup,
     element: <SignupPage />,
+  },
+  {
+    path: routePaths.postDetail,
+    element: <BoardDetailPage />,
   },
   {
     element: <ProtectedRoute />,
