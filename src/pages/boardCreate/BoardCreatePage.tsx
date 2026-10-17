@@ -31,6 +31,7 @@ export function BoardCreatePage() {
 
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewUrlsRef = useRef<Set<string>>(new Set())
 
   const [title, setTitle] = useState('')
   const [contents, setContents] = useState('')
@@ -42,10 +43,11 @@ export function BoardCreatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    const previewUrls = previewUrlsRef.current
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
+      previewUrls.forEach((url) => URL.revokeObjectURL(url))
     }
-  }, [imagePreviews])
+  }, [])
 
   const isFormValid =
     title.trim() !== '' &&
@@ -85,6 +87,7 @@ export function BoardCreatePage() {
       url: URL.createObjectURL(file),
     }))
 
+    nextPreviews.forEach((preview) => previewUrlsRef.current.add(preview.url))
     setImagePreviews((prev) => [...prev, ...nextPreviews])
     setMessage('')
     event.target.value = ''
@@ -96,6 +99,7 @@ export function BoardCreatePage() {
 
       if (targetPreview) {
         URL.revokeObjectURL(targetPreview.url)
+        previewUrlsRef.current.delete(targetPreview.url)
       }
 
       return prev.filter((preview) => preview.url !== targetUrl)
