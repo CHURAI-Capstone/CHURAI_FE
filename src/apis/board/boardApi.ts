@@ -27,6 +27,7 @@ interface PostSummaryResponse {
   writerId: number
   writerNickname: string
   createdAt: string
+  thumbnailUrl?: string
 }
 
 interface PostPageResponse {
@@ -47,15 +48,51 @@ interface PostDetailApiResponse {
   title: string
   contents: string
   category: 'MAIN_DISH' | 'DESSERT'
-  views: number
-  writerId: number
-  writerNickname: string
+  views?: number
+  writerId?: number
+  writerNickname?: string
+  nickname?: string
   createdAt: string
-  updatedAt: string
+  updatedAt?: string
+  thumbnailUrl?: string
+  imageUrls?: string[]
+  images?: Array<
+    | string
+    | {
+        imageUrl?: string
+        url?: string
+      }
+  >
+  ingredients?: Array<
+    | string
+    | {
+        name?: string
+        amount?: string
+        quantity?: string
+      }
+  >
+  tags?: Array<
+    | string
+    | {
+        name?: string
+        tagName?: string
+      }
+  >
+  interestedCount?: number
+  heungMiCount?: number
+  churaiCount?: number
+  chuRaiCount?: number
+  commentCount?: number
+}
+
+export interface PostIngredient {
+  name: string
+  amount?: string
 }
 
 export interface PostDetailResponse {
   id: number
+  writerId?: number
   category: 'MAIN_DISH' | 'DESSERT'
   title: string
   nickname: string
@@ -64,10 +101,12 @@ export interface PostDetailResponse {
   interestedCount: number
   churaiCount: number
   commentCount: number
-  views: number
+  views?: number
   createdAt: string
+  updatedAt?: string
   contents?: string
   imageUrls?: string[]
+  ingredients: PostIngredient[]
   comments?: {
     id: number
     nickname: string
@@ -183,20 +222,98 @@ export const getComments = async (
 function toPostDetailResponse(
   post: PostSummaryResponse | PostDetailApiResponse,
 ): PostDetailResponse {
+  const isDetail = 'contents' in post
+
   return {
     id: post.postId,
+    writerId: post.writerId,
     category: post.category,
     title: post.title,
-    nickname: post.writerNickname,
-    thumbnailUrl: undefined,
-    tags: [],
-    interestedCount: 0,
-    churaiCount: 0,
-    commentCount: 0,
+    nickname: isDetail
+      ? (post.writerNickname ?? post.nickname ?? '알 수 없는 사용자')
+      : post.writerNickname,
+    thumbnailUrl: post.thumbnailUrl,
+    tags: isDetail ? normalizeTags(post.tags) : [],
+    interestedCount: isDetail
+      ? (post.interestedCount ?? post.heungMiCount ?? 0)
+      : 0,
+    churaiCount: isDetail
+      ? (post.churaiCount ?? post.chuRaiCount ?? 0)
+      : 0,
+    commentCount: isDetail ? (post.commentCount ?? 0) : 0,
     views: post.views,
     createdAt: post.createdAt,
-    contents: 'contents' in post ? post.contents : undefined,
-    imageUrls: [],
+    updatedAt: isDetail ? post.updatedAt : undefined,
+    contents: isDetail ? post.contents : undefined,
+    imageUrls: isDetail ? normalizeImageUrls(post) : [],
+    ingredients: isDetail
+      ? normalizeIngredients(post.ingredients, post.contents)
+      : [],
     comments: [],
   }
+}
+
+function normalizeImageUrls(post: PostDetailApiResponse) {
+  const urls = [
+    ...(post.imageUrls ?? []),
+    ...(post.images ?? []).map((image) => {
+      if (typeof image === 'string') {
+        return image
+      }
+
+      return image.imageUrl ?? image.url ?? ''
+    }),
+  ].filter(Boolean)
+
+  return [...new Set(urls)]
+}
+
+function normalizeTags(tags: PostDetailApiResponse['tags']) {
+  return (tags ?? [])
+    .map((tag) => {
+      if (typeof tag === 'string') {
+        return tag
+      }
+
+      return tag.name ?? tag.tagName ?? ''
+    })
+    .filter(Boolean)
+}
+
+function normalizeIngredients(
+  ingredients: PostDetailApiResponse['ingredients'],
+  contents: string,
+): PostIngredient[] {
+  const normalizedIngredients = (ingredients ?? [])
+    .map((ingredient) => {
+      if (typeof ingredient === 'string') {
+        return {
+          name: ingredient,
+        }
+      }
+
+      return {
+        name: ingredient.name ?? '',
+        amount: ingredient.amount ?? ingredient.quantity,
+      }
+    })
+    .filter((ingredient) => ingredient.name !== '')
+
+  if (normalizedIngredients.length > 0) {
+    return normalizedIngredients
+  }
+
+  const ingredientBlock = contents.match(
+    /(?:^|\n)\s*재료\s*:\s*([\s\S]*?)(?=\n\s*(?:순서|방법|만드는\s*방법|조리법)\s*:|$)/,
+  )?.[1]
+
+  if (!ingredientBlock) {
+    return []
+  }
+
+  return ingredientBlock
+    .split(/[,\n·]/)
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .map((name) => ({ name }))
 }
