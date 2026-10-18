@@ -1,4 +1,4 @@
-import { api } from '@/apis/http'
+import { api, fileApi } from '@/apis/http'
 
 interface ApiResponse<T> {
   code: string
@@ -11,12 +11,15 @@ export interface CreatePostRequest {
   title: string
   contents: string
   category: 'MAIN_DISH' | 'DESSERT'
+  images?: File[]
 }
 
 export interface UpdatePostRequest {
   title: string
   contents: string
   category: 'MAIN_DISH' | 'DESSERT'
+  deleteImageIds?: number[]
+  images?: File[]
 }
 
 interface PostSummaryResponse {
@@ -27,7 +30,7 @@ interface PostSummaryResponse {
   writerId: number
   writerNickname: string
   createdAt: string
-  thumbnailUrl?: string
+  thumbnailUrl?: string | null
 }
 
 interface PostPageResponse {
@@ -91,6 +94,11 @@ export interface PostIngredient {
   amount?: string
 }
 
+export interface PostImageResponse {
+  imageId: number
+  imageUrl: string
+}
+
 export interface PostDetailResponse {
   id: number
   writerId?: number
@@ -109,6 +117,7 @@ export interface PostDetailResponse {
   combinationMethod: string
   imageUrls?: string[]
   ingredients: PostIngredient[]
+  images?: PostImageResponse[]
   comments?: {
     id: number
     nickname: string
@@ -134,9 +143,9 @@ export interface CommentResponse {
 export const createPost = async (
   requestBody: CreatePostRequest,
 ) => {
-  const response = await api.post<ApiResponse<PostSaveResponse>>(
+  const response = await fileApi.post<ApiResponse<PostSaveResponse>>(
     '/posts',
-    requestBody,
+    toPostFormData(requestBody),
   )
 
   return {
@@ -166,11 +175,15 @@ export const updatePost = async (
   postId: string,
   requestBody: UpdatePostRequest,
 ) => {
-  const response = await api.put<
+  const response = await fileApi.put<
     ApiResponse<PostDetailApiResponse>
-  >(`/posts/${postId}`, requestBody)
+  >(`/posts/${postId}`, toPostFormData(requestBody))
 
   return toPostDetailResponse(response.data.result)
+}
+
+export const deletePost = async (postId: string) => {
+  await api.delete<ApiResponse<null>>(`/posts/${postId}`)
 }
 
 export const getPostRanking = async () => {
@@ -234,7 +247,9 @@ function toPostDetailResponse(
     nickname: isDetail
       ? (post.writerNickname ?? post.nickname ?? '알 수 없는 사용자')
       : post.writerNickname,
-    thumbnailUrl: post.thumbnailUrl,
+    thumbnailUrl: isDetail
+      ? (normalizeImageUrls(post)[0] ?? post.thumbnailUrl)
+      : (post.thumbnailUrl ?? undefined),
     tags: isDetail ? normalizeTags(post.tags) : [],
     interestedCount: isDetail
       ? (post.interestedCount ?? post.heungMiCount ?? 0)
@@ -254,6 +269,7 @@ function toPostDetailResponse(
     ingredients: isDetail
       ? normalizeIngredients(post.ingredients, post.contents)
       : [],
+    images: isDetail ? normalizeEditableImages(post.images) : undefined,
     comments: [],
   }
 }
@@ -285,6 +301,16 @@ function normalizeImageUrls(post: PostDetailApiResponse) {
   ].filter(Boolean)
 
   return [...new Set(urls)]
+}
+
+function normalizeEditableImages(images: PostDetailApiResponse['images']) {
+  return (images ?? []).flatMap((image) => {
+    if (typeof image === 'string' || image.imageId == null || !image.imageUrl) {
+      return []
+    }
+
+    return [{ imageId: image.imageId, imageUrl: image.imageUrl }]
+  })
 }
 
 function normalizeTags(tags: PostDetailApiResponse['tags']) {
@@ -335,4 +361,23 @@ function normalizeIngredients(
     .map((name) => name.trim())
     .filter(Boolean)
     .map((name) => ({ name }))
+}
+
+function toPostFormData(request: CreatePostRequest | UpdatePostRequest) {
+  const formData = new FormData()
+  formData.append('title', request.title)
+  formData.append('contents', request.contents)
+  formData.append('category', request.category)
+
+  if ('deleteImageIds' in request) {
+    request.deleteImageIds?.forEach((imageId) => {
+      formData.append('deleteImageIds', String(imageId))
+    })
+  }
+
+  request.images?.forEach((image) => {
+    formData.append('images', image)
+  })
+
+  return formData
 }

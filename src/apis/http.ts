@@ -20,10 +20,7 @@ export const api = axios.create({
 
 export const fileApi = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'multipart/form-data',
-  },
+  timeout: 30000,
 })
 
 const attachAuthHeader = (

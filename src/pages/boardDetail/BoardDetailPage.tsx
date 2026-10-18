@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { getMyInfo } from '@/apis/auth'
 import {
+  deletePost,
   getPostDetail,
   type PostDetailResponse,
 } from '@/apis/board/boardApi'
 import BackIcon from '@/assets/icons/back.svg?react'
+import DeleteIcon from '@/assets/icons/delete.svg?react'
 import EyeIcon from '@/assets/icons/eye.svg?react'
 import ForkIcon from '@/assets/icons/fork.svg?react'
 import GoodIcon from '@/assets/icons/good.svg?react'
 import ImageIcon from '@/assets/icons/image.svg?react'
+import WriteIcon from '@/assets/icons/write.svg?react'
+import { getAuthErrorMessage } from '@/features/auth/getAuthErrorMessage'
+import { getAccessToken } from '@/features/auth/tokenStorage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePostActions } from '@/hooks/usePostActions'
+import { routePaths } from '@/router/paths'
 
 const CATEGORY_LABEL = {
   MAIN_DISH: '식사류',
@@ -28,6 +35,9 @@ export function BoardDetailPage() {
   const [post, setPost] = useState<PostDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [actionMessage, setActionMessage] = useState('')
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const isValidPostId =
     Boolean(postId) && Number.isInteger(numericPostId) && numericPostId > 0
@@ -65,11 +75,55 @@ export function BoardDetailPage() {
     }
   }, [isValidPostId, postId, reloadKey])
 
+  useEffect(() => {
+    if (!getAccessToken()) {
+      return
+    }
+
+    let cancelled = false
+    getMyInfo()
+      .then((me) => {
+        if (!cancelled) {
+          setCurrentUserId(me.userId)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCurrentUserId(null)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const handleRetry = () => {
     setPost(null)
     setErrorMessage('')
     setIsLoading(true)
     setReloadKey((currentKey) => currentKey + 1)
+  }
+
+  const handleDelete = async () => {
+    if (!postId || !post || post.writerId !== currentUserId || isDeleting) {
+      return
+    }
+
+    if (!window.confirm('이 레시피를 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      setActionMessage('')
+      setIsDeleting(true)
+      await deletePost(postId)
+      navigate(routePaths.home, { replace: true })
+    } catch (error) {
+      setActionMessage(getAuthErrorMessage(error, '레시피 삭제에 실패했습니다.'))
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (!isValidPostId) {
@@ -96,6 +150,7 @@ export function BoardDetailPage() {
   }
 
   const imageUrls = post.imageUrls ?? []
+  const isOwner = currentUserId !== null && post.writerId === currentUserId
 
   return (
     <main className="relative mx-auto min-h-dvh w-full max-w-107.5 bg-white pb-10">
@@ -138,6 +193,34 @@ export function BoardDetailPage() {
             {CATEGORY_LABEL[post.category]}
           </span>
         </section>
+
+        {isOwner && (
+          <div className="border-gray1 flex items-center justify-end gap-3 border-b py-3">
+            <button
+              type="button"
+              onClick={() => navigate(routePaths.postEdit.replace(':postId', String(post.id)))}
+              disabled={isDeleting}
+              className="caption2-medium text-gray4 flex items-center gap-1 disabled:opacity-60"
+            >
+              <WriteIcon className="h-4 w-4" />
+              수정
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="caption2-medium text-main flex items-center gap-1 disabled:opacity-60"
+            >
+              <DeleteIcon className="h-4 w-4" />
+              {isDeleting ? '삭제 중...' : '삭제'}
+            </button>
+          </div>
+        )}
+        {actionMessage && (
+          <p className="caption2-medium bg-sub text-main mt-3 rounded-lg px-3 py-2" role="alert">
+            {actionMessage}
+          </p>
+        )}
 
         <section className="pt-5">
           <h1 className="heading1-semibold break-words">{post.title}</h1>
