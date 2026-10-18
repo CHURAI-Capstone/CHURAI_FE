@@ -33,7 +33,7 @@ export function BoardDetailPage() {
     Boolean(postId) && Number.isInteger(numericPostId) && numericPostId > 0
 
   useDocumentTitle(
-    post ? `${post.title} | CHURAI` : '레시피 상세 | CHURAI',
+    post ? `${post.title} | CHURAI` : '꿀조합 상세 | CHURAI',
   )
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function BoardDetailPage() {
       })
       .catch(() => {
         if (!cancelled) {
-          setErrorMessage('레시피를 불러오지 못했습니다.')
+          setErrorMessage('꿀조합을 불러오지 못했습니다.')
         }
       })
       .finally(() => {
@@ -102,7 +102,7 @@ export function BoardDetailPage() {
       <DetailHeader onBack={() => navigate(-1)} />
 
       <section
-        aria-label="레시피 이미지"
+        aria-label="꿀조합 이미지"
         className="scrollbar-none flex h-55 snap-x gap-2 overflow-x-auto bg-gray1 p-2"
       >
         {imageUrls.length > 0 ? (
@@ -214,9 +214,9 @@ export function BoardDetailPage() {
           )}
         </InfoSection>
 
-        <InfoSection title="레시피 설명">
+        <InfoSection title="조합 방법">
           <p className="caption1-regular border-gray1 whitespace-pre-wrap break-words rounded-xl border p-4 leading-relaxed text-gray4">
-            {post.contents || '등록된 레시피 설명이 없습니다.'}
+            {post.combinationMethod || '등록된 조합 방법이 없습니다.'}
           </p>
         </InfoSection>
 
@@ -252,7 +252,7 @@ function DetailHeader({ onBack }: { onBack: () => void }) {
       >
         <BackIcon className="h-6 w-6" />
       </button>
-      <h1 className="body2-semibold">레시피 상세</h1>
+      <h1 className="body2-semibold">꿀조합 상세</h1>
     </header>
   )
 }
