@@ -18,6 +18,13 @@ export interface SignupResult {
   userId: number
 }
 
+export interface MyInfoResult {
+  userId: number
+  email: string
+  nickname: string
+  createdAt: string
+}
+
 export interface AuthContextValue {
   isAuthenticated: boolean
   login: (request: LoginRequest) => Promise<void>

@@ -24,12 +24,14 @@ interface ImagePreview {
 }
 
 const MAX_IMAGE_COUNT = 3
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export function BoardCreatePage() {
   useDocumentTitle('레시피 작성 | CHURAI')
 
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewUrlsRef = useRef<Set<string>>(new Set())
 
   const [title, setTitle] = useState('')
   const [contents, setContents] = useState('')
@@ -41,10 +43,11 @@ export function BoardCreatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    const previewUrls = previewUrlsRef.current
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
+      previewUrls.forEach((url) => URL.revokeObjectURL(url))
     }
-  }, [imagePreviews])
+  }, [])
 
   const isFormValid =
     title.trim() !== '' &&
@@ -67,6 +70,12 @@ export function BoardCreatePage() {
       return
     }
 
+    if (files.some((file) => !SUPPORTED_IMAGE_TYPES.includes(file.type))) {
+      setMessage('JPG, PNG, GIF, WEBP 이미지만 업로드할 수 있습니다.')
+      event.target.value = ''
+      return
+    }
+
     if (imagePreviews.length + files.length > MAX_IMAGE_COUNT) {
       setMessage('이미지는 최대 3장까지 업로드할 수 있습니다.')
       event.target.value = ''
@@ -78,6 +87,7 @@ export function BoardCreatePage() {
       url: URL.createObjectURL(file),
     }))
 
+    nextPreviews.forEach((preview) => previewUrlsRef.current.add(preview.url))
     setImagePreviews((prev) => [...prev, ...nextPreviews])
     setMessage('')
     event.target.value = ''
@@ -89,6 +99,7 @@ export function BoardCreatePage() {
 
       if (targetPreview) {
         URL.revokeObjectURL(targetPreview.url)
+        previewUrlsRef.current.delete(targetPreview.url)
       }
 
       return prev.filter((preview) => preview.url !== targetUrl)
@@ -138,6 +149,7 @@ export function BoardCreatePage() {
         title: title.trim(),
         contents: contents.trim(),
         category: selectedCategory,
+        images: imagePreviews.map((preview) => preview.file),
       })
 
       window.alert('레시피 작성이 완료되었습니다.')
@@ -180,6 +192,7 @@ export function BoardCreatePage() {
             <input
               type="text"
               value={title}
+              maxLength={100}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="레시피명을 입력해주세요"
               disabled={isSubmitting}
@@ -226,6 +239,7 @@ export function BoardCreatePage() {
             <textarea
               rows={6}
               value={contents}
+              maxLength={5000}
               onChange={(event) => setContents(event.target.value)}
               placeholder={`자유롭게 레시피를 작성해주세요.\n재료:\n만드는 방법:\n1.\n2.\n3.`}
               disabled={isSubmitting}
@@ -247,7 +261,7 @@ export function BoardCreatePage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               multiple
               onChange={handleImageChange}
               className="hidden"
