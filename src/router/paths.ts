@@ -3,6 +3,8 @@ export const routePaths = {
   login: '/login',
   signup: '/signup',
   search: '/search',
+  board: '/board',
+  explore: '/explore',
   boardCreate: '/boardCreate',
   posts: '/posts',
   postDetail: '/posts/:postId',

@@ -24,6 +24,7 @@ interface ImagePreview {
 }
 
 const MAX_IMAGE_COUNT = 3
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export function BoardCreatePage() {
@@ -72,6 +73,12 @@ export function BoardCreatePage() {
 
     if (files.some((file) => !SUPPORTED_IMAGE_TYPES.includes(file.type))) {
       setMessage('JPG, PNG, GIF, WEBP 이미지만 업로드할 수 있습니다.')
+      event.target.value = ''
+      return
+    }
+
+    if (files.some((file) => file.size > MAX_IMAGE_SIZE)) {
+      setMessage('이미지는 장당 5MB 이하로 업로드할 수 있습니다.')
       event.target.value = ''
       return
     }
@@ -140,6 +147,11 @@ export function BoardCreatePage() {
 
     if (!isFormValid || !selectedCategory) {
       setMessage('필수 항목을 모두 입력해주세요.')
+      return
+    }
+
+    if (tags.length > 0) {
+      setMessage('현재 태그 저장을 지원하지 않습니다. 태그를 삭제한 뒤 등록해주세요.')
       return
     }
 
@@ -326,6 +338,16 @@ export function BoardCreatePage() {
               ))}
             </div>
           )}
+
+          {tags.length > 0 && (
+            <p className="caption2-medium text-main" role="status">
+              현재 입력한 태그는 저장할 수 없습니다. 태그를 삭제한 뒤 등록해주세요.
+            </p>
+          )}
+
+          <p className="caption2-regular text-gray3">
+            태그 저장은 서버 기능이 제공된 후 사용할 수 있습니다.
+          </p>
 
           {message && (
             <p className="caption2-medium rounded-lg bg-sub px-3 py-2 text-main">

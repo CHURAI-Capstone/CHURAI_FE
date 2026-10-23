@@ -53,10 +53,15 @@ export function AppLayout() {
           onClick={() => navigate(routePaths.home)}
         />
 
-        <SearchIcon
-          className="hover:text-gray2 absolute right-7 cursor-pointer"
-          onClick={() => navigate(routePaths.search)}
-        />
+        <button
+          type="button"
+          onClick={() => navigate(routePaths.board)}
+          className="hover:text-gray2 absolute right-7 flex h-9 w-9 items-center justify-center"
+          aria-label="레시피 검색"
+          title="레시피 검색"
+        >
+          <SearchIcon className="h-5 w-5" />
+        </button>
       </header>
 
       <Outlet />

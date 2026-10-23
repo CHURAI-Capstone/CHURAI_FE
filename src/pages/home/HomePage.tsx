@@ -10,9 +10,10 @@ import ListCard from '@/components/card/ListCard'
 import SquareCard from '@/components/card/SquareCard'
 import {
   getPostList,
-  getPostRanking,
+  getRecentPosts,
 } from '@/apis/board/boardApi'
 import type { PostDetailResponse } from '@/apis/board/boardApi'
+import { routePaths } from '@/router/paths'
 
 const CATEGORY_LABEL: Record<string, string> = {
   MAIN_DISH: '식사',
@@ -22,13 +23,13 @@ const CATEGORY_LABEL: Record<string, string> = {
 export function HomePage() {
   const navigate = useNavigate()
 
-  const [top3, setTop3] = useState<PostDetailResponse[]>([])
+  const [recentPosts, setRecentPosts] = useState<PostDetailResponse[]>([])
   const [postList, setPostList] = useState<PostDetailResponse[]>([])
 
   useEffect(() => {
-    getPostRanking()
+    getRecentPosts()
       .then((data) => {
-        setTop3(data ?? [])
+        setRecentPosts(data ?? [])
       })
       .catch(console.error)
 
@@ -59,11 +60,11 @@ export function HomePage() {
 
       <section className="mt-5">
         <h2 className="heading1-semibold">
-          츄라이 레시피 Top3
+          최근 등록된 레시피
         </h2>
 
         <p className="body2-medium text-gray3">
-          이번주 가장 핫한 꿀조합 확인하기
+          새로 올라온 꿀조합 확인하기
         </p>
 
         <div className="mt-4">
@@ -77,14 +78,13 @@ export function HomePage() {
             slidesPerView="auto"
             className="overflow-visible!"
           >
-            {top3.slice(0, 3).map((item, index) => (
+            {recentPosts.map((item) => (
               <SwiperSlide
-                key={item.id ?? index}
+                key={item.id}
                 className="w-auto!"
               >
                 <SquareCard
                   postId={item.id}
-                  rank={index + 1}
                   title={item.title}
                   imageSrc={item.thumbnailUrl}
                   likes={item.interestedCount}
@@ -109,7 +109,7 @@ export function HomePage() {
           <button
             type="button"
             className="caption1-regular text-gray3 flex items-center gap-1"
-            onClick={() => navigate('/board')}
+            onClick={() => navigate(routePaths.board)}
           >
             <span>더보기</span>
             <ArrowIcon className="h-4 w-4 rotate-270" />
@@ -141,7 +141,7 @@ export function HomePage() {
           <button
             type="button"
             className="caption1-regular text-gray3 flex items-center gap-1"
-            onClick={() => navigate('/board')}
+            onClick={() => navigate(routePaths.board)}
           >
             <span>더보기</span>
             <ArrowIcon className="h-4 w-4 rotate-270" />
