@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { getPostPage, type PostDetailResponse } from '@/apis/board/boardApi'
 import BackIcon from '@/assets/icons/back.svg?react'
+import SearchIcon from '@/assets/icons/search.svg?react'
 import ListCard from '@/components/card/ListCard'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { routePaths } from '@/router/paths'
@@ -21,6 +22,17 @@ export function BoardPage() {
   const [hasNext, setHasNext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [keyword, setKeyword] = useState('')
+  const [category, setCategory] = useState<'ALL' | PostDetailResponse['category']>('ALL')
+  const [sort, setSort] = useState<'latest' | 'popular'>('latest')
+
+  const normalizedKeyword = keyword.trim().toLocaleLowerCase()
+  const visiblePosts = posts
+    .filter((post) => category === 'ALL' || post.category === category)
+    .filter((post) => post.title.toLocaleLowerCase().includes(normalizedKeyword))
+    .sort((first, second) => sort === 'popular'
+      ? (second.views ?? 0) - (first.views ?? 0)
+      : Date.parse(second.createdAt) - Date.parse(first.createdAt))
 
   useEffect(() => {
     let cancelled = false
@@ -82,8 +94,51 @@ export function BoardPage() {
         </button>
       </div>
 
+      <div className="border-gray2 mb-4 flex h-11 items-center gap-2 rounded-lg border bg-white px-3">
+        <input
+          type="search"
+          value={keyword}
+          onChange={(event) => setKeyword(event.target.value)}
+          placeholder="레시피명 검색"
+          aria-label="레시피명 검색"
+          className="caption1-medium min-w-0 flex-1 bg-transparent outline-none placeholder:text-gray2"
+        />
+        <SearchIcon className="text-main h-5 w-5 shrink-0" aria-hidden="true" />
+      </div>
+
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex gap-1.5" role="group" aria-label="카테고리">
+          {([
+            ['ALL', '전체'],
+            ['MAIN_DISH', '식사'],
+            ['DESSERT', '디저트'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setCategory(value)}
+              aria-pressed={category === value}
+              className={`caption2-medium h-8 rounded-full border px-3 ${category === value ? 'border-main text-main' : 'border-gray2 text-gray3'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as 'latest' | 'popular')}
+          aria-label="정렬"
+          className="caption1-medium text-gray4 min-w-0 bg-transparent"
+        >
+          <option value="latest">최신순</option>
+          <option value="popular">조회순</option>
+        </select>
+      </div>
+
+      <p className="caption2-regular text-gray3 mb-3">검색·정렬은 불러온 레시피에 적용됩니다.</p>
+
       <div className="flex flex-col gap-2">
-        {posts.map((post) => (
+        {visiblePosts.map((post) => (
           <ListCard
             key={post.id}
             postId={post.id}
@@ -102,6 +157,9 @@ export function BoardPage() {
       {isLoading && <p className="caption1-medium text-gray3 py-5 text-center">불러오는 중...</p>}
       {!isLoading && !errorMessage && posts.length === 0 && (
         <p className="caption1-medium text-gray3 py-5 text-center">등록된 레시피가 없습니다.</p>
+      )}
+      {!isLoading && !errorMessage && posts.length > 0 && visiblePosts.length === 0 && (
+        <p className="caption1-medium text-gray3 py-5 text-center">일치하는 레시피가 없습니다.</p>
       )}
       {errorMessage && <p className="caption1-medium text-main py-5 text-center" role="alert">{errorMessage}</p>}
       {hasNext && (

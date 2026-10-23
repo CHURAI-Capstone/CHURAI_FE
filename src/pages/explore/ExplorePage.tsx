@@ -53,7 +53,7 @@ export function ExplorePage() {
     event.preventDefault()
     const nextIngredient = ingredientInput.trim()
 
-    if (nextIngredient && !ingredients.includes(nextIngredient)) {
+    if (nextIngredient && !ingredients.some((item) => item.toLocaleLowerCase() === nextIngredient.toLocaleLowerCase())) {
       setIngredients((current) => [...current, nextIngredient])
     }
     setIngredientInput('')
@@ -138,9 +138,28 @@ export function ExplorePage() {
       </section>
 
       <section className="py-6">
-        <h2 className="body2-semibold mb-3">탐색 결과</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="body2-semibold">탐색 결과</h2>
+          {(ingredients.length > 0 || selectedStage) && (
+            <button
+              type="button"
+              onClick={() => {
+                setIngredients([])
+                setSelectedStage(null)
+              }}
+              className="caption2-medium text-gray3"
+            >
+              조건 초기화
+            </button>
+          )}
+        </div>
+        {(ingredients.length > 0 || selectedStage) && (
+          <p className="caption2-medium text-gray4 mb-2 break-keep">
+            {[...ingredients, selectedStage].filter(Boolean).join(' · ')}
+          </p>
+        )}
         <p className="caption1-medium text-gray3 bg-white px-1 py-5 text-center">
-          재료와 스펙트럼에 맞는 결과는 서버 탐색 기능이 제공된 후 표시됩니다.
+          재료·스펙트럼 조건에 맞는 결과는 탐색 API 연동 후 표시됩니다.
         </p>
       </section>
 

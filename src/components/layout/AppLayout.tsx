@@ -55,10 +55,10 @@ export function AppLayout() {
 
         <button
           type="button"
-          onClick={() => navigate(routePaths.explore)}
+          onClick={() => navigate(routePaths.board)}
           className="hover:text-gray2 absolute right-7 flex h-9 w-9 items-center justify-center"
-          aria-label="재료 탐색"
-          title="재료 탐색"
+          aria-label="레시피 검색"
+          title="레시피 검색"
         >
           <SearchIcon className="h-5 w-5" />
         </button>
