@@ -28,6 +28,7 @@ interface NewImagePreview {
 }
 
 const MAX_IMAGE_COUNT = 3
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export function BoardEditPage() {
@@ -115,6 +116,11 @@ export function BoardEditPage() {
 
     if (files.some((file) => !SUPPORTED_IMAGE_TYPES.includes(file.type))) {
       setFormMessage('JPG, PNG, GIF, WEBP 이미지만 업로드할 수 있습니다.')
+      return
+    }
+
+    if (files.some((file) => file.size > MAX_IMAGE_SIZE)) {
+      setFormMessage('이미지는 장당 5MB 이하로 업로드할 수 있습니다.')
       return
     }
 
