@@ -114,6 +114,7 @@ export interface PostDetailResponse {
   createdAt: string
   updatedAt?: string
   contents?: string
+  combinationMethod: string
   imageUrls?: string[]
   ingredients: PostIngredient[]
   images?: PostImageResponse[]
@@ -261,6 +262,9 @@ function toPostDetailResponse(
     createdAt: post.createdAt,
     updatedAt: isDetail ? post.updatedAt : undefined,
     contents: isDetail ? post.contents : undefined,
+    combinationMethod: isDetail
+      ? extractCombinationMethod(post.contents)
+      : '',
     imageUrls: isDetail ? normalizeImageUrls(post) : [],
     ingredients: isDetail
       ? normalizeIngredients(post.ingredients, post.contents)
@@ -268,6 +272,20 @@ function toPostDetailResponse(
     images: isDetail ? normalizeEditableImages(post.images) : undefined,
     comments: [],
   }
+}
+
+function extractCombinationMethod(contents: string) {
+  const method = contents.match(
+    /(?:^|\n)\s*(?:순서|방법|만드는\s*방법|조리법)\s*:\s*([\s\S]*)$/,
+  )?.[1]
+
+  if (method?.trim()) {
+    return method.trim()
+  }
+
+  const hasIngredientSection = /(?:^|\n)\s*재료\s*:/.test(contents)
+
+  return hasIngredientSection ? '' : contents.trim()
 }
 
 function normalizeImageUrls(post: PostDetailApiResponse) {
