@@ -3,9 +3,11 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { BoardCreatePage } from '@/pages/boardCreate/BoardCreatePage'
+import { BoardPage } from '@/pages/board/BoardPage'
 import { BoardDetailPage } from '@/pages/boardDetail/BoardDetailPage'
 import { BoardEditPage } from '@/pages/boardEdit/BoardEditPage'
 import { HomePage } from '@/pages/home/HomePage'
+import { ExplorePage } from '@/pages/explore/ExplorePage'
 import { LoginPage } from '@/pages/login/LoginPage'
 import { SignupPage } from '@/pages/signup/SignupPage'
 import { routePaths } from '@/router/paths'
@@ -36,6 +38,14 @@ export const router = createBrowserRouter([
           {
             path: routePaths.boardCreate,
             element: <BoardCreatePage />,
+          },
+          {
+            path: routePaths.board,
+            element: <BoardPage />,
+          },
+          {
+            path: routePaths.explore,
+            element: <ExplorePage />,
           },
           {
             path: routePaths.postEdit,
