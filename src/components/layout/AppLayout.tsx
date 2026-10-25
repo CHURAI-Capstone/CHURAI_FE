@@ -55,7 +55,7 @@ export function AppLayout() {
 
         <button
           type="button"
-          onClick={() => navigate(routePaths.board)}
+          onClick={() => navigate(routePaths.search)}
           className="hover:text-gray2 absolute right-7 flex h-9 w-9 items-center justify-center"
           aria-label="레시피 검색"
           title="레시피 검색"
