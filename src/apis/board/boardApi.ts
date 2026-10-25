@@ -127,6 +127,11 @@ export interface PostDetailResponse {
   }[]
 }
 
+export interface PostPage {
+  posts: PostDetailResponse[]
+  hasNext: boolean
+}
+
 export interface CreateCommentRequest {
   contents: string
   parentId: number | null
@@ -153,13 +158,22 @@ export const createPost = async (
   }
 }
 
-export const getPostList = async () => {
+export const getPostPage = async (
+  page = 0,
+  size = 10,
+): Promise<PostPage> => {
   const response = await api.get<ApiResponse<PostPageResponse>>(
     '/posts',
+    { params: { page, size } },
   )
 
-  return response.data.result.posts.map(toPostDetailResponse)
+  return {
+    posts: response.data.result.posts.map(toPostDetailResponse),
+    hasNext: response.data.result.hasNext,
+  }
 }
+
+export const getPostList = async () => (await getPostPage()).posts
 
 export const getPostDetail = async (
   postId: string,
@@ -186,13 +200,7 @@ export const deletePost = async (postId: string) => {
   await api.delete<ApiResponse<null>>(`/posts/${postId}`)
 }
 
-export const getPostRanking = async () => {
-  const response = await api.get<ApiResponse<PostPageResponse>>(
-    '/posts?size=3',
-  )
-
-  return response.data.result.posts.map(toPostDetailResponse)
-}
+export const getRecentPosts = async () => (await getPostPage(0, 3)).posts
 
 export const searchPosts = async (
   keyword: string,
