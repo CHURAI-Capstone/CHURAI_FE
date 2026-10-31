@@ -87,6 +87,20 @@ interface PostDetailApiResponse {
   churaiCount?: number
   chuRaiCount?: number
   commentCount?: number
+  comments?: CommentApiResponse[]
+}
+
+export type CommentType = 'GENERAL' | 'REVIEW' | 'VARIATION'
+
+interface CommentApiResponse {
+  commentId: number
+  type: CommentType
+  contents: string
+  writerId: number
+  writerNickname: string
+  createdAt: string
+  updatedAt: string
+  replies: CommentApiResponse[]
 }
 
 export interface PostIngredient {
@@ -118,13 +132,7 @@ export interface PostDetailResponse {
   imageUrls?: string[]
   ingredients: PostIngredient[]
   images?: PostImageResponse[]
-  comments?: {
-    id: number
-    nickname: string
-    contents: string
-    parentId: number | null
-    createdAt: string
-  }[]
+  comments: CommentResponse[]
 }
 
 export interface PostPage {
@@ -135,14 +143,18 @@ export interface PostPage {
 export interface CreateCommentRequest {
   contents: string
   parentId: number | null
+  type: CommentType
 }
 
 export interface CommentResponse {
   id: number
+  type: CommentType
   nickname: string
+  writerId: number
   contents: string
-  parentId: number | null
   createdAt: string
+  updatedAt: string
+  replies: CommentResponse[]
 }
 
 export const createPost = async (
@@ -216,30 +228,27 @@ export const createComment = async (
   postId: string,
   requestBody: CreateCommentRequest,
 ) => {
-  const finalBody = {
-    contents: requestBody.contents,
-    parentId: requestBody.parentId,
-  }
-
-  const response = await api.post<
-    ApiResponse<unknown>
-  >(
+  const response = await api.post<ApiResponse<{ commentId: number }>>(
     `/posts/${postId}/comments`,
-    finalBody,
+    requestBody,
   )
 
-  return response.data.result
+  return response.data.result.commentId
 }
 
-export const getComments = async (
+export const updateComment = async (
   postId: string,
+  commentId: number,
+  contents: string,
 ) => {
-  const response =
-    await api.get<ApiResponse<CommentResponse[]>>(
-      `/posts/${postId}/comments`,
-    )
+  await api.put<ApiResponse<{ commentId: number }>>(
+    `/posts/${postId}/comments/${commentId}`,
+    { contents },
+  )
+}
 
-  return response.data.result
+export const deleteComment = async (postId: string, commentId: number) => {
+  await api.delete<ApiResponse<null>>(`/posts/${postId}/comments/${commentId}`)
 }
 
 function toPostDetailResponse(
@@ -265,7 +274,9 @@ function toPostDetailResponse(
     churaiCount: isDetail
       ? (post.churaiCount ?? post.chuRaiCount ?? 0)
       : 0,
-    commentCount: isDetail ? (post.commentCount ?? 0) : 0,
+    commentCount: isDetail
+      ? (post.commentCount ?? countComments(post.comments ?? []))
+      : 0,
     views: post.views,
     createdAt: post.createdAt,
     updatedAt: isDetail ? post.updatedAt : undefined,
@@ -278,8 +289,25 @@ function toPostDetailResponse(
       ? normalizeIngredients(post.ingredients, post.contents)
       : [],
     images: isDetail ? normalizeEditableImages(post.images) : undefined,
-    comments: [],
+    comments: isDetail ? (post.comments ?? []).map(toCommentResponse) : [],
   }
+}
+
+function toCommentResponse(comment: CommentApiResponse): CommentResponse {
+  return {
+    id: comment.commentId,
+    type: comment.type,
+    nickname: comment.writerNickname,
+    writerId: comment.writerId,
+    contents: comment.contents,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
+    replies: (comment.replies ?? []).map(toCommentResponse),
+  }
+}
+
+function countComments(comments: CommentApiResponse[]): number {
+  return comments.reduce((count, comment) => count + 1 + countComments(comment.replies ?? []), 0)
 }
 
 function extractCombinationMethod(contents: string) {

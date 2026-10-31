@@ -19,6 +19,7 @@ import { getAccessToken } from '@/features/auth/tokenStorage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { usePostActions } from '@/hooks/usePostActions'
 import { routePaths } from '@/router/paths'
+import { CommentsSection } from './CommentsSection'
 
 const CATEGORY_LABEL = {
   MAIN_DISH: '식사류',
@@ -124,6 +125,12 @@ export function BoardDetailPage() {
     } finally {
       setIsDeleting(false)
     }
+  }
+
+  const refreshPost = async () => {
+    if (!postId) return
+    const updated = await getPostDetail(postId)
+    setPost(updated)
   }
 
   if (!isValidPostId) {
@@ -319,6 +326,14 @@ export function BoardDetailPage() {
             <EmptyInfo text="등록된 태그가 없습니다." />
           )}
         </InfoSection>
+
+        <CommentsSection
+          postId={String(post.id)}
+          comments={post.comments}
+          count={post.commentCount}
+          currentUserId={currentUserId}
+          onRefresh={refreshPost}
+        />
       </div>
     </main>
   )
