@@ -7,17 +7,23 @@ import {
   getPostDetail,
   type PostDetailResponse,
 } from '@/apis/board/boardApi'
+import {
+  cancelPostReaction,
+  cancelPostScrap,
+  getPostReactions,
+  scrapPost,
+  selectPostReaction,
+  type ReactionCounts,
+  type ReactionType,
+} from '@/apis/board/postEngagementApi'
 import BackIcon from '@/assets/icons/back.svg?react'
 import DeleteIcon from '@/assets/icons/delete.svg?react'
 import EyeIcon from '@/assets/icons/eye.svg?react'
-import ForkIcon from '@/assets/icons/fork.svg?react'
-import GoodIcon from '@/assets/icons/good.svg?react'
 import ImageIcon from '@/assets/icons/image.svg?react'
 import WriteIcon from '@/assets/icons/write.svg?react'
 import { getAuthErrorMessage } from '@/features/auth/getAuthErrorMessage'
 import { getAccessToken } from '@/features/auth/tokenStorage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { usePostActions } from '@/hooks/usePostActions'
 import { routePaths } from '@/router/paths'
 
 const CATEGORY_LABEL = {
@@ -25,12 +31,49 @@ const CATEGORY_LABEL = {
   DESSERT: '디저트류',
 } as const
 
+const EMPTY_REACTION_COUNTS: ReactionCounts = {
+  TRIED: 0,
+  DELICIOUS: 0,
+  UNIQUE_TASTE: 0,
+  NOT_MY_TASTE: 0,
+}
+
+const REACTION_OPTIONS: Array<{
+  type: ReactionType
+  emoji: string
+  label: string
+  description: string
+}> = [
+  {
+    type: 'TRIED',
+    emoji: '🥄',
+    label: '먹어봤어요',
+    description: '이 조합을 직접 먹어봤어요',
+  },
+  {
+    type: 'DELICIOUS',
+    emoji: '😋',
+    label: '맛있었어요',
+    description: '맛있어서 또 먹고 싶어요',
+  },
+  {
+    type: 'UNIQUE_TASTE',
+    emoji: '✨',
+    label: '맛이 특이해요',
+    description: '색다르고 독특한 맛이에요',
+  },
+  {
+    type: 'NOT_MY_TASTE',
+    emoji: '🤔',
+    label: '내 취향은 아니에요',
+    description: '내 입맛과는 조금 달라요',
+  },
+]
+
 export function BoardDetailPage() {
   const { postId } = useParams<{ postId: string }>()
   const navigate = useNavigate()
   const numericPostId = Number(postId)
-  const { churaid, toggleChurai, interested, toggleInterested } =
-    usePostActions(numericPostId)
 
   const [post, setPost] = useState<PostDetailResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -38,6 +81,18 @@ export function BoardDetailPage() {
   const [actionMessage, setActionMessage] = useState('')
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [reactionCounts, setReactionCounts] = useState<ReactionCounts>(
+    EMPTY_REACTION_COUNTS,
+  )
+  const [myReactions, setMyReactions] = useState<ReactionType[]>([])
+  const [pendingReaction, setPendingReaction] = useState<ReactionType | null>(
+    null,
+  )
+  const [isReactionLoading, setIsReactionLoading] = useState(true)
+  const [reactionMessage, setReactionMessage] = useState('')
+  const [isScrapped, setIsScrapped] = useState(false)
+  const [scrapCount, setScrapCount] = useState(0)
+  const [isScrapPending, setIsScrapPending] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const isValidPostId =
     Boolean(postId) && Number.isInteger(numericPostId) && numericPostId > 0
@@ -57,6 +112,8 @@ export function BoardDetailPage() {
       .then((data) => {
         if (!cancelled) {
           setPost(data)
+          setIsScrapped(data.scrapped ?? false)
+          setScrapCount(data.scrapCount ?? 0)
         }
       })
       .catch(() => {
@@ -67,6 +124,36 @@ export function BoardDetailPage() {
       .finally(() => {
         if (!cancelled) {
           setIsLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isValidPostId, postId, reloadKey])
+
+  useEffect(() => {
+    if (!postId || !isValidPostId) {
+      return
+    }
+
+    let cancelled = false
+
+    getPostReactions(postId)
+      .then((result) => {
+        if (!cancelled) {
+          setReactionCounts(result.counts)
+          setMyReactions(result.myReactions)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReactionMessage('반응 정보를 불러오지 못했습니다.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsReactionLoading(false)
         }
       })
 
@@ -101,7 +188,9 @@ export function BoardDetailPage() {
   const handleRetry = () => {
     setPost(null)
     setErrorMessage('')
+    setReactionMessage('')
     setIsLoading(true)
+    setIsReactionLoading(true)
     setReloadKey((currentKey) => currentKey + 1)
   }
 
@@ -123,6 +212,78 @@ export function BoardDetailPage() {
       setActionMessage(getAuthErrorMessage(error, '레시피 삭제에 실패했습니다.'))
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const requireLogin = () => {
+    if (getAccessToken()) {
+      return true
+    }
+
+    navigate(routePaths.login, {
+      state: {
+        from: postId
+          ? routePaths.postDetail.replace(':postId', postId)
+          : routePaths.home,
+        message: '반응과 스크랩 기능은 로그인 후 이용할 수 있습니다.',
+      },
+    })
+    return false
+  }
+
+  const handleReaction = async (type: ReactionType) => {
+    if (!postId || pendingReaction || !requireLogin()) {
+      return
+    }
+
+    const isSelected = myReactions.includes(type)
+
+    try {
+      setPendingReaction(type)
+      setReactionMessage('')
+      const result = isSelected
+        ? await cancelPostReaction(postId, type)
+        : await selectPostReaction(postId, type)
+
+      setReactionCounts(result.counts)
+      setMyReactions(result.myReactions)
+      setReactionMessage(
+        isSelected ? '반응을 취소했습니다.' : '반응을 남겼습니다.',
+      )
+    } catch (error) {
+      setReactionMessage(
+        getAuthErrorMessage(error, '반응을 처리하지 못했습니다.'),
+      )
+    } finally {
+      setPendingReaction(null)
+    }
+  }
+
+  const handleScrap = async () => {
+    if (!postId || isScrapPending || !requireLogin()) {
+      return
+    }
+
+    try {
+      setIsScrapPending(true)
+      setActionMessage('')
+      const result = isScrapped
+        ? await cancelPostScrap(postId)
+        : await scrapPost(postId)
+
+      setIsScrapped(result.scrapped)
+      setScrapCount(result.scrapCount)
+      setActionMessage(
+        result.scrapped
+          ? '꿀조합을 스크랩했습니다.'
+          : '스크랩을 취소했습니다.',
+      )
+    } catch (error) {
+      setActionMessage(
+        getAuthErrorMessage(error, '스크랩을 처리하지 못했습니다.'),
+      )
+    } finally {
+      setIsScrapPending(false)
     }
   }
 
@@ -225,55 +386,100 @@ export function BoardDetailPage() {
         <section className="pt-5">
           <h1 className="heading1-semibold break-words">{post.title}</h1>
 
-          <div className="mt-3 flex items-center gap-3">
-            <StatItem
-              icon={<ForkIcon className="h-4 w-4" />}
-              label="츄라이"
-              count={post.churaiCount + (churaid ? 1 : 0)}
-              active={churaid}
-            />
-            <StatItem
-              icon={<GoodIcon className="h-4 w-4" />}
-              label="흥미"
-              count={post.interestedCount + (interested ? 1 : 0)}
-              active={interested}
-            />
-            {post.views != null && (
+          <div className="mt-3 flex items-center justify-between gap-3">
+            {post.views != null ? (
               <StatItem
                 icon={<EyeIcon className="h-4 w-4" />}
                 label="조회"
                 count={post.views}
               />
+            ) : (
+              <span />
             )}
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-2.5">
             <button
               type="button"
-              onClick={toggleChurai}
-              className={`caption1-semibold flex h-11 items-center justify-center gap-1.5 rounded-xl border transition-colors ${
-                churaid
+              onClick={handleScrap}
+              disabled={isScrapPending}
+              aria-pressed={isScrapped}
+              className={`caption2-medium flex h-9 items-center gap-1.5 rounded-full border px-3 transition-colors disabled:opacity-60 ${
+                isScrapped
                   ? 'border-main bg-sub text-main'
-                  : 'border-sub bg-sub text-main'
+                  : 'border-gray2 bg-white text-gray4'
               }`}
             >
-              <ForkIcon className="h-4 w-4" />
-              츄라이
-            </button>
-            <button
-              type="button"
-              onClick={toggleInterested}
-              className={`caption1-semibold flex h-11 items-center justify-center gap-1.5 rounded-xl border transition-colors ${
-                interested
-                  ? 'border-gray3 bg-gray1 text-gray4'
-                  : 'border-gray2 bg-white text-gray3'
-              }`}
-            >
-              <GoodIcon className="h-4 w-4" />
-              흥미로워요
+              <BookmarkIcon filled={isScrapped} />
+              {isScrapPending
+                ? '처리 중...'
+                : isScrapped
+                  ? '스크랩됨'
+                  : '스크랩'}
+              {scrapCount > 0 && <span>{scrapCount}</span>}
             </button>
           </div>
         </section>
+
+        <InfoSection title="이 조합, 어땠나요?">
+          <p className="caption2-regular text-gray3 -mt-1 mb-3">
+            먹어본 여부와 맛 평가를 선택해주세요.
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            {REACTION_OPTIONS.map((option) => {
+              const isSelected = myReactions.includes(option.type)
+              const isPending = pendingReaction === option.type
+
+              return (
+                <button
+                  key={option.type}
+                  type="button"
+                  onClick={() => handleReaction(option.type)}
+                  disabled={isReactionLoading || pendingReaction !== null}
+                  aria-pressed={isSelected}
+                  aria-label={`${option.label} ${reactionCounts[option.type]}명`}
+                  className={`flex min-h-22 flex-col items-start justify-between rounded-xl border p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isSelected
+                      ? 'border-main bg-sub shadow-sm'
+                      : 'border-gray1 bg-white hover:border-gray2'
+                  }`}
+                >
+                  <span className="flex w-full items-center justify-between">
+                    <span className="text-xl" aria-hidden="true">
+                      {option.emoji}
+                    </span>
+                    <span
+                      className={`caption2-medium rounded-full px-2 py-0.5 font-semibold ${
+                        isSelected
+                          ? 'bg-main text-white'
+                          : 'bg-gray1 text-gray3'
+                      }`}
+                    >
+                      {isPending ? '...' : reactionCounts[option.type]}
+                    </span>
+                  </span>
+                  <span>
+                    <strong
+                      className={`caption1-semibold block ${
+                        isSelected ? 'text-main' : 'text-gray4'
+                      }`}
+                    >
+                      {option.label}
+                    </strong>
+                    <span className="caption2-regular text-gray3 mt-0.5 block">
+                      {option.description}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          {reactionMessage && (
+            <p
+              className="caption2-medium bg-gray1 text-gray4 mt-3 rounded-lg px-3 py-2"
+              role="status"
+            >
+              {reactionMessage}
+            </p>
+          )}
+        </InfoSection>
 
         <InfoSection title="재료">
           {post.ingredients.length > 0 ? (
@@ -402,6 +608,23 @@ function EmptyInfo({ text }: { text: string }) {
     <p className="caption2-regular bg-gray1 text-gray3 rounded-xl px-4 py-3">
       {text}
     </p>
+  )
+}
+
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" />
+    </svg>
   )
 }
 
