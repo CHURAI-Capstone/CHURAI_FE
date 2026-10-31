@@ -87,6 +87,8 @@ interface PostDetailApiResponse {
   churaiCount?: number
   chuRaiCount?: number
   commentCount?: number
+  scrapped?: boolean
+  scrapCount?: number
 }
 
 export interface PostIngredient {
@@ -110,6 +112,8 @@ export interface PostDetailResponse {
   interestedCount: number
   churaiCount: number
   commentCount: number
+  scrapped?: boolean
+  scrapCount?: number
   views?: number
   createdAt: string
   updatedAt?: string
@@ -266,6 +270,8 @@ function toPostDetailResponse(
       ? (post.churaiCount ?? post.chuRaiCount ?? 0)
       : 0,
     commentCount: isDetail ? (post.commentCount ?? 0) : 0,
+    scrapped: isDetail ? post.scrapped : undefined,
+    scrapCount: isDetail ? post.scrapCount : undefined,
     views: post.views,
     createdAt: post.createdAt,
     updatedAt: isDetail ? post.updatedAt : undefined,
