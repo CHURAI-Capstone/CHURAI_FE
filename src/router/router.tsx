@@ -9,6 +9,7 @@ import { BoardEditPage } from '@/pages/boardEdit/BoardEditPage'
 import { HomePage } from '@/pages/home/HomePage'
 import { ExplorePage } from '@/pages/explore/ExplorePage'
 import { LoginPage } from '@/pages/login/LoginPage'
+import { SearchPage } from '@/pages/search/SearchPage'
 import { SignupPage } from '@/pages/signup/SignupPage'
 import { routePaths } from '@/router/paths'
 
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
           {
             path: routePaths.explore,
             element: <ExplorePage />,
+          },
+          {
+            path: routePaths.search,
+            element: <SearchPage />,
           },
           {
             path: routePaths.postEdit,
