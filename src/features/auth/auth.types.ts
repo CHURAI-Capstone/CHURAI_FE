@@ -23,6 +23,13 @@ export interface MyInfoResult {
   email: string
   nickname: string
   createdAt: string
+  activity?: {
+    postCount: number
+    scrapCount: number
+    triedCount: number
+    tasteReactionCount: number
+    commentCount: number
+  }
 }
 
 export interface AuthContextValue {

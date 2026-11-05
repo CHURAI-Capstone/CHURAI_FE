@@ -13,6 +13,7 @@ import { routePaths } from '@/router/paths'
 const HIDE_FAB_PREFIXES = [
   '/boardCreate',
   '/boardDetail',
+  '/mypage',
 ]
 
 export function AppLayout() {
@@ -52,6 +53,15 @@ export function AppLayout() {
           className="h-9 cursor-pointer text-white"
           onClick={() => navigate(routePaths.home)}
         />
+
+        <button
+          type="button"
+          onClick={() => navigate(routePaths.myPage)}
+          aria-current={pathname === routePaths.myPage ? 'page' : undefined}
+          className="caption2-semibold absolute right-20 flex h-9 items-center text-white"
+        >
+          마이
+        </button>
 
         <button
           type="button"
