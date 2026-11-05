@@ -88,6 +88,8 @@ interface PostDetailApiResponse {
   chuRaiCount?: number
   commentCount?: number
   comments?: CommentApiResponse[]
+  scrapped?: boolean
+  scrapCount?: number
 }
 
 export type CommentType = 'GENERAL' | 'REVIEW' | 'VARIATION'
@@ -124,6 +126,8 @@ export interface PostDetailResponse {
   interestedCount: number
   churaiCount: number
   commentCount: number
+  scrapped?: boolean
+  scrapCount?: number
   views?: number
   createdAt: string
   updatedAt?: string
@@ -277,6 +281,8 @@ function toPostDetailResponse(
     commentCount: isDetail
       ? (post.commentCount ?? countComments(post.comments ?? []))
       : 0,
+    scrapped: isDetail ? post.scrapped : undefined,
+    scrapCount: isDetail ? post.scrapCount : undefined,
     views: post.views,
     createdAt: post.createdAt,
     updatedAt: isDetail ? post.updatedAt : undefined,
