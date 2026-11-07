@@ -5,6 +5,7 @@ import type {
   MyInfoResult,
   SignupRequest,
   SignupResult,
+  UpdateMyInfoRequest,
 } from '@/features/auth/auth.types'
 import type { ApiResponse } from '@/types/api'
 
@@ -47,4 +48,19 @@ export async function getMyInfo(): Promise<MyInfoResult> {
   }
 
   return data.result
+}
+
+export async function updateMyInfo(
+  request: UpdateMyInfoRequest,
+): Promise<MyInfoResult> {
+  const { data } = await api.patch<ApiResponse<MyInfoResult | null>>(
+    '/users/me',
+    request,
+  )
+
+  if (!data.isSuccess) {
+    throw new Error(data.message || '사용자 정보를 수정하지 못했습니다.')
+  }
+
+  return data.result ?? getMyInfo()
 }
