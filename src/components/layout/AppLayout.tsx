@@ -14,6 +14,7 @@ const HIDE_FAB_PREFIXES = [
   '/boardCreate',
   '/boardDetail',
   '/mypage',
+  '/rankings',
 ]
 
 export function AppLayout() {

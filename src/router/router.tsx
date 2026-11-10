@@ -10,6 +10,7 @@ import { HomePage } from '@/pages/home/HomePage'
 import { ExplorePage } from '@/pages/explore/ExplorePage'
 import { LoginPage } from '@/pages/login/LoginPage'
 import { MyActivityPage } from '@/pages/myActivity/MyActivityPage'
+import { RankingPage } from '@/pages/ranking/RankingPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { SignupPage } from '@/pages/signup/SignupPage'
 import { routePaths } from '@/router/paths'
@@ -56,6 +57,10 @@ export const router = createBrowserRouter([
           {
             path: routePaths.myPage,
             element: <MyActivityPage />,
+          },
+          {
+            path: routePaths.ranking,
+            element: <RankingPage />,
           },
           {
             path: routePaths.postEdit,

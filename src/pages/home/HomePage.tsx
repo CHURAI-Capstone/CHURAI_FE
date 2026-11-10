@@ -100,6 +100,15 @@ export function HomePage() {
         </div>
       </section>
 
+      <button
+        type="button"
+        onClick={() => navigate(routePaths.ranking)}
+        className="caption1-semibold border-gray2 mt-6 flex h-11 w-full items-center justify-between rounded-lg border bg-white px-4 text-left"
+      >
+        <span>츄라이 인기 랭킹</span>
+        <span className="text-main">보러 가기 →</span>
+      </button>
+
       <section className="mt-6 mb-10">
         <div className="flex items-center justify-between">
           <h3 className="body2-semibold">
