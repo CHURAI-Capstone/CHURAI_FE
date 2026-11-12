@@ -7,7 +7,6 @@ import {
 import CreateButton from '@/assets/icons/create-button.svg?react'
 import Logo from '@/assets/icons/logo.svg?react'
 import SearchIcon from '@/assets/icons/search.svg?react'
-import { useAuth } from '@/features/auth/useAuth'
 import { routePaths } from '@/router/paths'
 
 const HIDE_FAB_PREFIXES = [
@@ -20,18 +19,10 @@ const HIDE_FAB_PREFIXES = [
 export function AppLayout() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
 
   const showFab = !HIDE_FAB_PREFIXES.some(
     (prefix) => pathname.startsWith(prefix),
   )
-
-  const handleLogout = () => {
-    logout()
-    navigate(routePaths.login, {
-      replace: true,
-    })
-  }
 
   return (
     <div
@@ -44,10 +35,11 @@ export function AppLayout() {
       <header className="bg-main relative mb-6 flex h-14 items-center justify-center text-white">
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={() => navigate(routePaths.myPage)}
           className="caption1-semibold absolute left-5 cursor-pointer text-white"
+          aria-label="마이페이지"
         >
-          로그아웃
+          MY
         </button>
 
         <Logo

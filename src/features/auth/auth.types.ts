@@ -32,6 +32,10 @@ export interface MyInfoResult {
   }
 }
 
+export interface UpdateMyInfoRequest {
+  nickname: string
+}
+
 export interface AuthContextValue {
   isAuthenticated: boolean
   login: (request: LoginRequest) => Promise<void>
