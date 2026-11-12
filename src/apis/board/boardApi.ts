@@ -87,20 +87,8 @@ interface PostDetailApiResponse {
   churaiCount?: number
   chuRaiCount?: number
   commentCount?: number
-  comments?: CommentApiResponse[]
-}
-
-export type CommentType = 'GENERAL' | 'REVIEW' | 'VARIATION'
-
-interface CommentApiResponse {
-  commentId: number
-  type: CommentType
-  contents: string
-  writerId: number
-  writerNickname: string
-  createdAt: string
-  updatedAt: string
-  replies: CommentApiResponse[]
+  scrapped?: boolean
+  scrapCount?: number
 }
 
 export interface PostIngredient {
@@ -124,6 +112,8 @@ export interface PostDetailResponse {
   interestedCount: number
   churaiCount: number
   commentCount: number
+  scrapped?: boolean
+  scrapCount?: number
   views?: number
   createdAt: string
   updatedAt?: string
@@ -132,7 +122,13 @@ export interface PostDetailResponse {
   imageUrls?: string[]
   ingredients: PostIngredient[]
   images?: PostImageResponse[]
-  comments: CommentResponse[]
+  comments?: {
+    id: number
+    nickname: string
+    contents: string
+    parentId: number | null
+    createdAt: string
+  }[]
 }
 
 export interface PostPage {
@@ -143,18 +139,14 @@ export interface PostPage {
 export interface CreateCommentRequest {
   contents: string
   parentId: number | null
-  type: CommentType
 }
 
 export interface CommentResponse {
   id: number
-  type: CommentType
   nickname: string
-  writerId: number
   contents: string
+  parentId: number | null
   createdAt: string
-  updatedAt: string
-  replies: CommentResponse[]
 }
 
 export const createPost = async (
@@ -228,27 +220,30 @@ export const createComment = async (
   postId: string,
   requestBody: CreateCommentRequest,
 ) => {
-  const response = await api.post<ApiResponse<{ commentId: number }>>(
+  const finalBody = {
+    contents: requestBody.contents,
+    parentId: requestBody.parentId,
+  }
+
+  const response = await api.post<
+    ApiResponse<unknown>
+  >(
     `/posts/${postId}/comments`,
-    requestBody,
+    finalBody,
   )
 
-  return response.data.result.commentId
+  return response.data.result
 }
 
-export const updateComment = async (
+export const getComments = async (
   postId: string,
-  commentId: number,
-  contents: string,
 ) => {
-  await api.put<ApiResponse<{ commentId: number }>>(
-    `/posts/${postId}/comments/${commentId}`,
-    { contents },
-  )
-}
+  const response =
+    await api.get<ApiResponse<CommentResponse[]>>(
+      `/posts/${postId}/comments`,
+    )
 
-export const deleteComment = async (postId: string, commentId: number) => {
-  await api.delete<ApiResponse<null>>(`/posts/${postId}/comments/${commentId}`)
+  return response.data.result
 }
 
 function toPostDetailResponse(
@@ -274,9 +269,9 @@ function toPostDetailResponse(
     churaiCount: isDetail
       ? (post.churaiCount ?? post.chuRaiCount ?? 0)
       : 0,
-    commentCount: isDetail
-      ? (post.commentCount ?? countComments(post.comments ?? []))
-      : 0,
+    commentCount: isDetail ? (post.commentCount ?? 0) : 0,
+    scrapped: isDetail ? post.scrapped : undefined,
+    scrapCount: isDetail ? post.scrapCount : undefined,
     views: post.views,
     createdAt: post.createdAt,
     updatedAt: isDetail ? post.updatedAt : undefined,
@@ -289,25 +284,8 @@ function toPostDetailResponse(
       ? normalizeIngredients(post.ingredients, post.contents)
       : [],
     images: isDetail ? normalizeEditableImages(post.images) : undefined,
-    comments: isDetail ? (post.comments ?? []).map(toCommentResponse) : [],
+    comments: [],
   }
-}
-
-function toCommentResponse(comment: CommentApiResponse): CommentResponse {
-  return {
-    id: comment.commentId,
-    type: comment.type,
-    nickname: comment.writerNickname,
-    writerId: comment.writerId,
-    contents: comment.contents,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt,
-    replies: (comment.replies ?? []).map(toCommentResponse),
-  }
-}
-
-function countComments(comments: CommentApiResponse[]): number {
-  return comments.reduce((count, comment) => count + 1 + countComments(comment.replies ?? []), 0)
 }
 
 function extractCombinationMethod(contents: string) {
