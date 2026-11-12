@@ -9,7 +9,7 @@ import { BoardEditPage } from '@/pages/boardEdit/BoardEditPage'
 import { HomePage } from '@/pages/home/HomePage'
 import { ExplorePage } from '@/pages/explore/ExplorePage'
 import { LoginPage } from '@/pages/login/LoginPage'
-import { MyActivityPage } from '@/pages/myActivity/MyActivityPage'
+import { MyPage } from '@/pages/myPage/MyPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { SignupPage } from '@/pages/signup/SignupPage'
 import { routePaths } from '@/router/paths'
@@ -55,7 +55,7 @@ export const router = createBrowserRouter([
           },
           {
             path: routePaths.myPage,
-            element: <MyActivityPage />,
+            element: <MyPage />,
           },
           {
             path: routePaths.postEdit,
