@@ -1,95 +1,70 @@
-import BadgeFirst from '../../assets/icons/1st-badge.svg'
-import BadgeSecond from '../../assets/icons/2nd-badge.svg'
-import BadgeThird from '../../assets/icons/3rd-badge.svg'
-import GoodIcon from '../../assets/icons/good.svg?react'
-import EyeIcon from '../../assets/icons/eye.svg?react'
-import ForkIcon from '../../assets/icons/fork.svg?react'
-import { usePostActions } from '../../hooks/usePostActions'
+import BadgeFirst from '@/assets/icons/1st-badge.svg'
+import BadgeSecond from '@/assets/icons/2nd-badge.svg'
+import BadgeThird from '@/assets/icons/3rd-badge.svg'
+import EyeIcon from '@/assets/icons/eye.svg?react'
 
 interface SquareCardProps {
-  postId: number
   rank?: number
   imageSrc?: string
   title: string
-  likes: number
+  summary?: string
+  category?: string
+  nickname?: string
   views: number
-  shares: number
   onClick?: () => void
 }
 
+const RANK_BADGES: Record<number, string> = {
+  1: BadgeFirst,
+  2: BadgeSecond,
+  3: BadgeThird,
+}
+
 export default function SquareCard({
-  postId,
   rank,
   imageSrc,
   title,
-  likes,
+  summary,
+  category,
+  nickname,
   views,
-  shares,
   onClick,
 }: SquareCardProps) {
-  const { churaid, toggleChurai, interested, toggleInterested } = usePostActions(postId)
-
-  const rankBadges: Record<number, string> = {
-    1: BadgeFirst,
-    2: BadgeSecond,
-    3: BadgeThird,
-  }
-
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className="border-gray2 relative flex w-60 cursor-pointer flex-col overflow-visible rounded-2xl border bg-white transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+      className="border-gray2 relative flex w-[min(68vw,15rem)] shrink-0 snap-start flex-col overflow-visible rounded-2xl border bg-white text-left transition-all duration-200 active:scale-[0.98]"
     >
-      {rank && rankBadges[rank] && (
+      {rank && RANK_BADGES[rank] && (
         <img
-          src={rankBadges[rank]}
-          alt={`${rank}등 뱃지`}
-          className="pointer-events-none absolute -top-7 left-1/2 z-20 h-12 w-12 -translate-x-1/2 object-contain drop-shadow-sm"
+          src={RANK_BADGES[rank]}
+          alt={`${rank}위`}
+          className="pointer-events-none absolute -top-6 left-3 z-20 h-11 w-11 object-contain drop-shadow-sm"
         />
       )}
 
-      <div className="bg-gray1 h-35 w-full shrink-0 overflow-hidden rounded-t-2xl">
+      <div className="bg-gray1 h-34 w-full shrink-0 overflow-hidden rounded-t-2xl">
         {imageSrc ? (
-          <img src={imageSrc} alt={title} className="h-full w-full object-cover" />
+          <img src={imageSrc} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full bg-[linear-gradient(45deg,#f4f5f6_25%,transparent_25%),linear-gradient(-45deg,#f4f5f6_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f4f5f6_75%),linear-gradient(-45deg,transparent_75%,#f4f5f6_75%)] bg-size-[20px_20px] bg-position-[0_0,0_10px,10px_-10px,-10px_0]" />
+          <div className="text-gray2 flex h-full items-center justify-center text-3xl" aria-hidden="true">🍯</div>
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col overflow-hidden rounded-b-2xl bg-white p-3">
-        <h3 className="body2-medium truncate text-black" title={title}>
-          {title}
-        </h3>
-
-        <div className="caption1-regular text-gray2 flex items-center gap-2">
-          <button
-            className={`flex items-center gap-0.5 transition-colors duration-200 ${churaid ? 'text-main' : 'text-gray2'}`}
-            onClick={e => {
-              e.stopPropagation()
-              toggleChurai()
-            }}
-          >
-            <ForkIcon className="h-4 w-4" />
-            <span>{shares + (churaid ? 1 : 0)}</span>
-          </button>
-
-          <button
-            className={`flex items-center gap-0.5 font-medium transition-colors duration-200 ${interested ? 'text-main' : 'text-gray2'}`}
-            onClick={e => {
-              e.stopPropagation()
-              toggleInterested()
-            }}
-          >
-            <GoodIcon className="h-4 w-4" />
-            <span>{likes + (interested ? 1 : 0)}</span>
-          </button>
-
-          <div className="flex items-center gap-0.5">
-            <EyeIcon className="h-4 w-4" />
-            <span>{views}</span>
-          </div>
-        </div>
+      <div className="flex min-h-27 min-w-0 flex-col p-3">
+        {(category || nickname) && (
+          <p className="caption2-medium text-gray3 truncate">
+            {[category, nickname].filter(Boolean).join(' · ')}
+          </p>
+        )}
+        <h3 className="caption1-semibold mt-0.5 truncate text-black" title={title}>{title}</h3>
+        {summary && <p className="caption2-regular text-gray3 mt-1 line-clamp-1">{summary}</p>}
+        <span className="caption2-medium text-gray3 mt-auto flex items-center gap-1 pt-2">
+          <EyeIcon className="h-4 w-4" />
+          {views.toLocaleString()}
+        </span>
       </div>
-    </div>
+    </button>
   )
 }
