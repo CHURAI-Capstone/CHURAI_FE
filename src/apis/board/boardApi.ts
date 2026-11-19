@@ -7,17 +7,49 @@ interface ApiResponse<T> {
   result: T
 }
 
+export type PostCategory =
+  | 'MAIN_DISH'
+  | 'DESSERT'
+
+export type Spectrum =
+  | 'FAMILIAR'
+  | 'FUSION'
+  | 'NEW_MENU'
+  | 'EXPERIMENTAL'
+
+export type CommentType =
+  | 'GENERAL'
+  | 'REVIEW'
+  | 'VARIATION'
+
 export interface CreatePostRequest {
   title: string
   contents: string
-  category: 'MAIN_DISH' | 'DESSERT'
+  category: PostCategory
+
+  summary: string
+  ingredients: string[]
+
+  coreIngredient?: string
+  spectrum: Spectrum
+  tags?: string[]
+
   images?: File[]
 }
 
 export interface UpdatePostRequest {
   title: string
   contents: string
-  category: 'MAIN_DISH' | 'DESSERT'
+  category: PostCategory
+
+  // 현재 수정 페이지가 아직 최신 DTO와
+  // 완전히 맞춰지지 않았으므로 일단 optional 처리
+  summary?: string
+  ingredients?: string[]
+  coreIngredient?: string
+  spectrum?: Spectrum
+  tags?: string[]
+
   deleteImageIds?: number[]
   images?: File[]
 }
@@ -25,12 +57,19 @@ export interface UpdatePostRequest {
 interface PostSummaryResponse {
   postId: number
   title: string
-  category: 'MAIN_DISH' | 'DESSERT'
+  summary?: string | null
+  category: PostCategory
+
+  spectrum?: Spectrum | null
+  coreIngredient?: string | null
+  tags?: string[]
+
   views: number
   writerId: number
   writerNickname: string
-  createdAt: string
+
   thumbnailUrl?: string | null
+  createdAt: string
 }
 
 interface PostPageResponse {
@@ -46,19 +85,62 @@ interface PostSaveResponse {
   postId: number
 }
 
+interface ReactionSummaryResponse {
+  counts?: {
+    TRIED?: number
+    DELICIOUS?: number
+    UNIQUE_TASTE?: number
+    NOT_MY_TASTE?: number
+  }
+
+  myReactions?: string[]
+}
+
+interface ScrapResponse {
+  scrapped: boolean
+  scrapCount: number
+}
+
+interface CommentApiResponse {
+  commentId: number
+  type: CommentType
+
+  contents: string
+
+  writerId: number
+  writerNickname: string
+
+  createdAt: string
+  updatedAt: string
+
+  replies: CommentApiResponse[]
+}
+
 interface PostDetailApiResponse {
   postId: number
   title: string
+
+  summary?: string | null
   contents: string
-  category: 'MAIN_DISH' | 'DESSERT'
+
+  category: PostCategory
+
+  spectrum?: Spectrum | null
+  coreIngredient?: string | null
+
   views?: number
+
   writerId?: number
   writerNickname?: string
   nickname?: string
+
   createdAt: string
   updatedAt?: string
+
   thumbnailUrl?: string
+
   imageUrls?: string[]
+
   images?: Array<
     | string
     | {
@@ -67,6 +149,7 @@ interface PostDetailApiResponse {
         url?: string
       }
   >
+
   ingredients?: Array<
     | string
     | {
@@ -75,6 +158,7 @@ interface PostDetailApiResponse {
         quantity?: string
       }
   >
+
   tags?: Array<
     | string
     | {
@@ -82,29 +166,20 @@ interface PostDetailApiResponse {
         tagName?: string
       }
   >
+
+  // 이전 응답 구조 호환
   interestedCount?: number
   heungMiCount?: number
   churaiCount?: number
   chuRaiCount?: number
   commentCount?: number
+  scrapped?: boolean
+  scrapCount?: number
+
+  // 현재 백엔드 응답 구조
+  reactions?: ReactionSummaryResponse
+  scrap?: ScrapResponse
   comments?: CommentApiResponse[]
-  scrap?: {
-    scrapped: boolean
-    scrapCount: number
-  }
-}
-
-export type CommentType = 'GENERAL' | 'REVIEW' | 'VARIATION'
-
-interface CommentApiResponse {
-  commentId: number
-  type: CommentType
-  contents: string
-  writerId: number
-  writerNickname: string
-  createdAt: string
-  updatedAt: string
-  replies: CommentApiResponse[]
 }
 
 export interface PostIngredient {
@@ -119,26 +194,49 @@ export interface PostImageResponse {
 
 export interface PostDetailResponse {
   id: number
+
   writerId?: number
-  category: 'MAIN_DISH' | 'DESSERT'
+
+  category: PostCategory
+
   title: string
+  summary?: string
+
   nickname: string
+
   thumbnailUrl?: string
+
   tags: string[]
+
+  spectrum?: Spectrum
+  coreIngredient?: string
+
   interestedCount: number
   churaiCount: number
   commentCount: number
+
   scrapped?: boolean
   scrapCount?: number
+
   views?: number
+
   createdAt: string
   updatedAt?: string
+
   contents?: string
   combinationMethod: string
+
   imageUrls?: string[]
   ingredients: PostIngredient[]
   images?: PostImageResponse[]
-  comments: CommentResponse[]
+
+  comments?: {
+    id: number
+    nickname: string
+    contents: string
+    parentId: number | null
+    createdAt: string
+  }[]
 }
 
 export interface PostPage {
@@ -149,27 +247,25 @@ export interface PostPage {
 export interface CreateCommentRequest {
   contents: string
   parentId: number | null
-  type: CommentType
+  type?: CommentType
 }
 
 export interface CommentResponse {
   id: number
-  type: CommentType
   nickname: string
-  writerId: number
   contents: string
+  parentId: number | null
   createdAt: string
-  updatedAt: string
-  replies: CommentResponse[]
 }
 
 export const createPost = async (
   requestBody: CreatePostRequest,
 ) => {
-  const response = await fileApi.post<ApiResponse<PostSaveResponse>>(
-    '/posts',
-    toPostFormData(requestBody),
-  )
+  const response =
+    await fileApi.post<ApiResponse<PostSaveResponse>>(
+      '/posts',
+      toPostFormData(requestBody),
+    )
 
   return {
     id: response.data.result.postId,
@@ -180,224 +276,459 @@ export const getPostPage = async (
   page = 0,
   size = 10,
 ): Promise<PostPage> => {
-  const response = await api.get<ApiResponse<PostPageResponse>>(
-    '/posts',
-    { params: { page, size } },
-  )
+  const response =
+    await api.get<ApiResponse<PostPageResponse>>(
+      '/posts',
+      {
+        params: {
+          page,
+          size,
+        },
+      },
+    )
 
   return {
-    posts: response.data.result.posts.map(toPostDetailResponse),
+    posts:
+      response.data.result.posts.map(
+        toPostDetailResponse,
+      ),
     hasNext: response.data.result.hasNext,
   }
 }
 
-export const getPostList = async () => (await getPostPage()).posts
+export const getPostList = async () =>
+  (await getPostPage()).posts
 
 export const getPostDetail = async (
   postId: string,
 ) => {
-  const response = await api.get<ApiResponse<PostDetailApiResponse>>(
-    `/posts/${postId}`,
-  )
+  const response =
+    await api.get<
+      ApiResponse<PostDetailApiResponse>
+    >(`/posts/${postId}`)
 
-  return toPostDetailResponse(response.data.result)
+  return toPostDetailResponse(
+    response.data.result,
+  )
 }
 
 export const updatePost = async (
   postId: string,
   requestBody: UpdatePostRequest,
 ) => {
-  const response = await fileApi.put<
-    ApiResponse<PostDetailApiResponse>
-  >(`/posts/${postId}`, toPostFormData(requestBody))
+  const response =
+    await fileApi.put<
+      ApiResponse<PostDetailApiResponse>
+    >(
+      `/posts/${postId}`,
+      toPostFormData(requestBody),
+    )
 
-  return toPostDetailResponse(response.data.result)
+  return toPostDetailResponse(
+    response.data.result,
+  )
 }
 
-export const deletePost = async (postId: string) => {
-  await api.delete<ApiResponse<null>>(`/posts/${postId}`)
+export const deletePost = async (
+  postId: string,
+) => {
+  await api.delete<ApiResponse<null>>(
+    `/posts/${postId}`,
+  )
 }
 
-export const getRecentPosts = async () => (await getPostPage(0, 3)).posts
+export const getRecentPosts = async () =>
+  (await getPostPage(0, 3)).posts
 
 export const searchPosts = async (
   keyword: string,
 ) => {
-  const response = await api.get<ApiResponse<PostPageResponse>>(
-    `/posts?keyword=${encodeURIComponent(keyword)}`,
-  )
+  const response =
+    await api.get<ApiResponse<PostPageResponse>>(
+      '/posts',
+      {
+        params: {
+          keyword,
+        },
+      },
+    )
 
-  return response.data.result.posts.map(toPostDetailResponse)
+  return response.data.result.posts.map(
+    toPostDetailResponse,
+  )
 }
 
 export const createComment = async (
   postId: string,
   requestBody: CreateCommentRequest,
 ) => {
-  const response = await api.post<ApiResponse<{ commentId: number }>>(
-    `/posts/${postId}/comments`,
-    requestBody,
-  )
+  const response =
+    await api.post<ApiResponse<unknown>>(
+      `/posts/${postId}/comments`,
+      {
+        contents: requestBody.contents,
+        parentId: requestBody.parentId,
+        type:
+          requestBody.type ??
+          'GENERAL',
+      },
+    )
 
-  return response.data.result.commentId
+  return response.data.result
 }
 
-export const updateComment = async (
+export const getComments = async (
   postId: string,
-  commentId: number,
-  contents: string,
 ) => {
-  await api.put<ApiResponse<{ commentId: number }>>(
-    `/posts/${postId}/comments/${commentId}`,
-    { contents },
-  )
-}
+  const post = await getPostDetail(postId)
 
-export const deleteComment = async (postId: string, commentId: number) => {
-  await api.delete<ApiResponse<null>>(`/posts/${postId}/comments/${commentId}`)
+  return post.comments ?? []
 }
 
 function toPostDetailResponse(
-  post: PostSummaryResponse | PostDetailApiResponse,
+  post:
+    | PostSummaryResponse
+    | PostDetailApiResponse,
 ): PostDetailResponse {
-  const isDetail = 'contents' in post
+  const isDetail =
+    'contents' in post
+
+  if (!isDetail) {
+    return {
+      id: post.postId,
+
+      writerId: post.writerId,
+
+      category: post.category,
+
+      title: post.title,
+      summary:
+        post.summary ?? undefined,
+
+      nickname:
+        post.writerNickname,
+
+      thumbnailUrl:
+        post.thumbnailUrl ??
+        undefined,
+
+      tags: post.tags ?? [],
+
+      spectrum:
+        post.spectrum ??
+        undefined,
+
+      coreIngredient:
+        post.coreIngredient ??
+        undefined,
+
+      interestedCount: 0,
+      churaiCount: 0,
+      commentCount: 0,
+
+      views: post.views,
+
+      createdAt: post.createdAt,
+
+      combinationMethod: '',
+
+      ingredients: [],
+      comments: [],
+    }
+  }
+
+  const imageUrls =
+    normalizeImageUrls(post)
+
+  const comments =
+    normalizeComments(
+      post.comments ?? [],
+    )
 
   return {
     id: post.postId,
-    writerId: post.writerId,
-    category: post.category,
-    title: post.title,
-    nickname: isDetail
-      ? (post.writerNickname ?? post.nickname ?? '알 수 없는 사용자')
-      : post.writerNickname,
-    thumbnailUrl: isDetail
-      ? (normalizeImageUrls(post)[0] ?? post.thumbnailUrl)
-      : (post.thumbnailUrl ?? undefined),
-    tags: isDetail ? normalizeTags(post.tags) : [],
-    interestedCount: isDetail
-      ? (post.interestedCount ?? post.heungMiCount ?? 0)
-      : 0,
-    churaiCount: isDetail
-      ? (post.churaiCount ?? post.chuRaiCount ?? 0)
-      : 0,
-    commentCount: isDetail
-      ? (post.commentCount ?? countComments(post.comments ?? []))
-      : 0,
-    scrapped: isDetail ? post.scrap?.scrapped : undefined,
-    scrapCount: isDetail ? post.scrap?.scrapCount : undefined,
-    views: post.views,
-    createdAt: post.createdAt,
-    updatedAt: isDetail ? post.updatedAt : undefined,
-    contents: isDetail ? post.contents : undefined,
-    combinationMethod: isDetail
-      ? extractCombinationMethod(post.contents)
-      : '',
-    imageUrls: isDetail ? normalizeImageUrls(post) : [],
-    ingredients: isDetail
-      ? normalizeIngredients(post.ingredients, post.contents)
-      : [],
-    images: isDetail ? normalizeEditableImages(post.images) : undefined,
-    comments: isDetail ? (post.comments ?? []).map(toCommentResponse) : [],
+
+    writerId:
+      post.writerId,
+
+    category:
+      post.category,
+
+    title:
+      post.title,
+
+    summary:
+      post.summary ??
+      undefined,
+
+    nickname:
+      post.writerNickname ??
+      post.nickname ??
+      '알 수 없는 사용자',
+
+    thumbnailUrl:
+      imageUrls[0] ??
+      post.thumbnailUrl,
+
+    tags:
+      normalizeTags(post.tags),
+
+    spectrum:
+      post.spectrum ??
+      undefined,
+
+    coreIngredient:
+      post.coreIngredient ??
+      undefined,
+
+    // 이전 프론트 카드와의 호환용
+    interestedCount:
+      post.interestedCount ??
+      post.heungMiCount ??
+      post.reactions?.counts?.DELICIOUS ??
+      0,
+
+    churaiCount:
+      post.churaiCount ??
+      post.chuRaiCount ??
+      post.reactions?.counts?.TRIED ??
+      0,
+
+    commentCount:
+      post.commentCount ??
+      countComments(
+        post.comments ?? [],
+      ),
+
+    scrapped:
+      post.scrap?.scrapped ??
+      post.scrapped,
+
+    scrapCount:
+      post.scrap?.scrapCount ??
+      post.scrapCount,
+
+    views:
+      post.views,
+
+    createdAt:
+      post.createdAt,
+
+    updatedAt:
+      post.updatedAt,
+
+    contents:
+      post.contents,
+
+    combinationMethod:
+      extractCombinationMethod(
+        post.contents,
+      ),
+
+    imageUrls,
+
+    ingredients:
+      normalizeIngredients(
+        post.ingredients,
+        post.contents,
+      ),
+
+    images:
+      normalizeEditableImages(
+        post.images,
+      ),
+
+    comments,
   }
 }
 
-function toCommentResponse(comment: CommentApiResponse): CommentResponse {
-  return {
-    id: comment.commentId,
-    type: comment.type,
-    nickname: comment.writerNickname,
-    writerId: comment.writerId,
-    contents: comment.contents,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt,
-    replies: (comment.replies ?? []).map(toCommentResponse),
-  }
-}
+function normalizeComments(
+  comments: CommentApiResponse[],
+): NonNullable<
+  PostDetailResponse['comments']
+> {
+  return comments.flatMap(
+    (comment) => [
+      {
+        id: comment.commentId,
+        nickname:
+          comment.writerNickname,
+        contents:
+          comment.contents,
+        parentId: null,
+        createdAt:
+          comment.createdAt,
+      },
 
-function countComments(comments: CommentApiResponse[]): number {
-  return comments.reduce(
-    (count, comment) => count + 1 + countComments(comment.replies ?? []),
-    0,
+      ...comment.replies.map(
+        (reply) => ({
+          id: reply.commentId,
+          nickname:
+            reply.writerNickname,
+          contents:
+            reply.contents,
+          parentId:
+            comment.commentId,
+          createdAt:
+            reply.createdAt,
+        }),
+      ),
+    ],
   )
 }
 
-function extractCombinationMethod(contents: string) {
-  const method = contents.match(
-    /(?:^|\n)\s*(?:순서|방법|만드는\s*방법|조리법)\s*:\s*([\s\S]*)$/,
-  )?.[1]
+function countComments(
+  comments: CommentApiResponse[],
+): number {
+  return comments.reduce<number>(
+    (total, comment) =>
+      total +
+      1 +
+      countComments(comment.replies ?? []),
+    0,
+  )
+}
+function extractCombinationMethod(
+  contents: string,
+) {
+  const method =
+    contents.match(
+      /(?:^|\n)\s*(?:순서|방법|만드는\s*방법|조리법)\s*:\s*([\s\S]*)$/,
+    )?.[1]
 
   if (method?.trim()) {
     return method.trim()
   }
 
-  const hasIngredientSection = /(?:^|\n)\s*재료\s*:/.test(contents)
+  const hasIngredientSection =
+    /(?:^|\n)\s*재료\s*:/.test(
+      contents,
+    )
 
-  return hasIngredientSection ? '' : contents.trim()
+  return hasIngredientSection
+    ? ''
+    : contents.trim()
 }
 
-function normalizeImageUrls(post: PostDetailApiResponse) {
+function normalizeImageUrls(
+  post: PostDetailApiResponse,
+) {
   const urls = [
     ...(post.imageUrls ?? []),
-    ...(post.images ?? []).map((image) => {
-      if (typeof image === 'string') {
-        return image
-      }
 
-      return image.imageUrl ?? image.url ?? ''
-    }),
+    ...(post.images ?? []).map(
+      (image) => {
+        if (
+          typeof image ===
+          'string'
+        ) {
+          return image
+        }
+
+        return (
+          image.imageUrl ??
+          image.url ??
+          ''
+        )
+      },
+    ),
   ].filter(Boolean)
 
   return [...new Set(urls)]
 }
 
-function normalizeEditableImages(images: PostDetailApiResponse['images']) {
-  return (images ?? []).flatMap((image) => {
-    if (typeof image === 'string' || image.imageId == null || !image.imageUrl) {
+function normalizeEditableImages(
+  images:
+    | PostDetailApiResponse['images']
+    | undefined,
+) {
+  return (
+    images ?? []
+  ).flatMap((image) => {
+    if (
+      typeof image === 'string' ||
+      image.imageId == null ||
+      !image.imageUrl
+    ) {
       return []
     }
 
-    return [{ imageId: image.imageId, imageUrl: image.imageUrl }]
+    return [
+      {
+        imageId:
+          image.imageId,
+        imageUrl:
+          image.imageUrl,
+      },
+    ]
   })
 }
 
-function normalizeTags(tags: PostDetailApiResponse['tags']) {
+function normalizeTags(
+  tags:
+    | PostDetailApiResponse['tags']
+    | undefined,
+) {
   return (tags ?? [])
     .map((tag) => {
-      if (typeof tag === 'string') {
+      if (
+        typeof tag === 'string'
+      ) {
         return tag
       }
 
-      return tag.name ?? tag.tagName ?? ''
+      return (
+        tag.name ??
+        tag.tagName ??
+        ''
+      )
     })
     .filter(Boolean)
 }
 
 function normalizeIngredients(
-  ingredients: PostDetailApiResponse['ingredients'],
+  ingredients:
+    | PostDetailApiResponse['ingredients']
+    | undefined,
   contents: string,
 ): PostIngredient[] {
-  const normalizedIngredients = (ingredients ?? [])
-    .map((ingredient) => {
-      if (typeof ingredient === 'string') {
-        return {
-          name: ingredient,
+  const normalizedIngredients =
+    (ingredients ?? [])
+      .map((ingredient) => {
+        if (
+          typeof ingredient ===
+          'string'
+        ) {
+          return {
+            name: ingredient,
+          }
         }
-      }
 
-      return {
-        name: ingredient.name ?? '',
-        amount: ingredient.amount ?? ingredient.quantity,
-      }
-    })
-    .filter((ingredient) => ingredient.name !== '')
+        return {
+          name:
+            ingredient.name ??
+            '',
+          amount:
+            ingredient.amount ??
+            ingredient.quantity,
+        }
+      })
+      .filter(
+        (ingredient) =>
+          ingredient.name !== '',
+      )
 
-  if (normalizedIngredients.length > 0) {
+  if (
+    normalizedIngredients.length >
+    0
+  ) {
     return normalizedIngredients
   }
 
-  const ingredientBlock = contents.match(
-    /(?:^|\n)\s*재료\s*:\s*([\s\S]*?)(?=\n\s*(?:순서|방법|만드는\s*방법|조리법)\s*:|$)/,
-  )?.[1]
+  const ingredientBlock =
+    contents.match(
+      /(?:^|\n)\s*재료\s*:\s*([\s\S]*?)(?=\n\s*(?:순서|방법|만드는\s*방법|조리법)\s*:|$)/,
+    )?.[1]
 
   if (!ingredientBlock) {
     return []
@@ -405,26 +736,100 @@ function normalizeIngredients(
 
   return ingredientBlock
     .split(/[,\n·]/)
-    .map((name) => name.trim())
+    .map((name) =>
+      name.trim(),
+    )
     .filter(Boolean)
-    .map((name) => ({ name }))
+    .map((name) => ({
+      name,
+    }))
 }
 
-function toPostFormData(request: CreatePostRequest | UpdatePostRequest) {
-  const formData = new FormData()
-  formData.append('title', request.title)
-  formData.append('contents', request.contents)
-  formData.append('category', request.category)
+function toPostFormData(
+  request:
+    | CreatePostRequest
+    | UpdatePostRequest,
+) {
+  const formData =
+    new FormData()
 
-  if ('deleteImageIds' in request) {
-    request.deleteImageIds?.forEach((imageId) => {
-      formData.append('deleteImageIds', String(imageId))
-    })
+  formData.append(
+    'title',
+    request.title,
+  )
+
+  formData.append(
+    'contents',
+    request.contents,
+  )
+
+  formData.append(
+    'category',
+    request.category,
+  )
+
+  if (request.summary != null) {
+    formData.append(
+      'summary',
+      request.summary,
+    )
   }
 
-  request.images?.forEach((image) => {
-    formData.append('images', image)
-  })
+  request.ingredients?.forEach(
+    (ingredient) => {
+      formData.append(
+        'ingredients',
+        ingredient,
+      )
+    },
+  )
+
+  if (
+    request.coreIngredient?.trim()
+  ) {
+    formData.append(
+      'coreIngredient',
+      request.coreIngredient.trim(),
+    )
+  }
+
+  if (request.spectrum) {
+    formData.append(
+      'spectrum',
+      request.spectrum,
+    )
+  }
+
+  request.tags?.forEach(
+    (tag) => {
+      formData.append(
+        'tags',
+        tag,
+      )
+    },
+  )
+
+  if (
+    'deleteImageIds' in request
+  ) {
+    request.deleteImageIds?.forEach(
+      (imageId) => {
+        formData.append(
+          'deleteImageIds',
+          String(imageId),
+        )
+      },
+    )
+  }
+
+  request.images?.forEach(
+    (image) => {
+      formData.append(
+        'images',
+        image,
+      )
+    },
+  )
 
   return formData
 }
