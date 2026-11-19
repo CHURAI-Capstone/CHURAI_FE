@@ -46,6 +46,7 @@ export function LoginPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isSubmitting) return
     setErrorMessage('')
     setNoticeMessage('')
 

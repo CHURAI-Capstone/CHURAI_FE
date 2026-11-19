@@ -41,13 +41,10 @@ export interface UpdatePostRequest {
   title: string
   contents: string
   category: PostCategory
-
-  // 현재 수정 페이지가 아직 최신 DTO와
-  // 완전히 맞춰지지 않았으므로 일단 optional 처리
-  summary?: string
-  ingredients?: string[]
+  summary: string
+  ingredients: string[]
   coreIngredient?: string
-  spectrum?: Spectrum
+  spectrum: Spectrum
   tags?: string[]
 
   deleteImageIds?: number[]
@@ -230,13 +227,7 @@ export interface PostDetailResponse {
   ingredients: PostIngredient[]
   images?: PostImageResponse[]
 
-  comments?: {
-    id: number
-    nickname: string
-    contents: string
-    parentId: number | null
-    createdAt: string
-  }[]
+  comments: CommentResponse[]
 }
 
 export interface PostPage {
@@ -247,15 +238,18 @@ export interface PostPage {
 export interface CreateCommentRequest {
   contents: string
   parentId: number | null
-  type?: CommentType
+  type: CommentType
 }
 
 export interface CommentResponse {
   id: number
+  type: CommentType
   nickname: string
+  writerId: number
   contents: string
-  parentId: number | null
   createdAt: string
+  updatedAt: string
+  replies: CommentResponse[]
 }
 
 export const createPost = async (
@@ -362,19 +356,27 @@ export const createComment = async (
   postId: string,
   requestBody: CreateCommentRequest,
 ) => {
-  const response =
-    await api.post<ApiResponse<unknown>>(
-      `/posts/${postId}/comments`,
-      {
-        contents: requestBody.contents,
-        parentId: requestBody.parentId,
-        type:
-          requestBody.type ??
-          'GENERAL',
-      },
-    )
+  const response = await api.post<ApiResponse<{ commentId: number }>>(
+    `/posts/${postId}/comments`,
+    requestBody,
+  )
 
-  return response.data.result
+  return response.data.result.commentId
+}
+
+export const updateComment = async (
+  postId: string,
+  commentId: number,
+  contents: string,
+) => {
+  await api.put<ApiResponse<{ commentId: number }>>(
+    `/posts/${postId}/comments/${commentId}`,
+    { contents },
+  )
+}
+
+export const deleteComment = async (postId: string, commentId: number) => {
+  await api.delete<ApiResponse<null>>(`/posts/${postId}/comments/${commentId}`)
 }
 
 export const getComments = async (
@@ -382,7 +384,7 @@ export const getComments = async (
 ) => {
   const post = await getPostDetail(postId)
 
-  return post.comments ?? []
+  return post.comments
 }
 
 function toPostDetailResponse(
@@ -544,37 +546,17 @@ function toPostDetailResponse(
 
 function normalizeComments(
   comments: CommentApiResponse[],
-): NonNullable<
-  PostDetailResponse['comments']
-> {
-  return comments.flatMap(
-    (comment) => [
-      {
-        id: comment.commentId,
-        nickname:
-          comment.writerNickname,
-        contents:
-          comment.contents,
-        parentId: null,
-        createdAt:
-          comment.createdAt,
-      },
-
-      ...comment.replies.map(
-        (reply) => ({
-          id: reply.commentId,
-          nickname:
-            reply.writerNickname,
-          contents:
-            reply.contents,
-          parentId:
-            comment.commentId,
-          createdAt:
-            reply.createdAt,
-        }),
-      ),
-    ],
-  )
+): CommentResponse[] {
+  return comments.map((comment) => ({
+    id: comment.commentId,
+    type: comment.type,
+    nickname: comment.writerNickname,
+    writerId: comment.writerId,
+    contents: comment.contents,
+    createdAt: comment.createdAt,
+    updatedAt: comment.updatedAt,
+    replies: normalizeComments(comment.replies ?? []),
+  }))
 }
 
 function countComments(
@@ -768,14 +750,9 @@ function toPostFormData(
     request.category,
   )
 
-  if (request.summary != null) {
-    formData.append(
-      'summary',
-      request.summary,
-    )
-  }
+  formData.append('summary', request.summary)
 
-  request.ingredients?.forEach(
+  request.ingredients.forEach(
     (ingredient) => {
       formData.append(
         'ingredients',
@@ -793,12 +770,7 @@ function toPostFormData(
     )
   }
 
-  if (request.spectrum) {
-    formData.append(
-      'spectrum',
-      request.spectrum,
-    )
-  }
+  formData.append('spectrum', request.spectrum)
 
   request.tags?.forEach(
     (tag) => {

@@ -396,6 +396,8 @@ export function BoardCreatePage() {
   ) => {
     event.preventDefault()
 
+    if (isSubmitting) return
+
     setMessage('')
 
     const selectedCategory =

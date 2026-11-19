@@ -78,9 +78,9 @@ export function MyActivityPage() {
       <div className="mb-5 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate(routePaths.home)}
+          onClick={() => navigate(routePaths.myPage)}
           className="flex h-9 w-9 shrink-0 items-center justify-center"
-          aria-label="홈으로 이동"
+          aria-label="마이페이지로 이동"
         >
           <BackIcon className="h-5 w-5" />
         </button>
