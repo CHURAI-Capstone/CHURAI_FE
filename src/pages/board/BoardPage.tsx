@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { getPostPage, type PostDetailResponse } from '@/apis/board/boardApi'
 import BackIcon from '@/assets/icons/back.svg?react'
@@ -17,13 +17,19 @@ export function BoardPage() {
   useDocumentTitle('전체 레시피 | CHURAI')
 
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedCategory = searchParams.get('category')
   const [posts, setPosts] = useState<PostDetailResponse[]>([])
   const [page, setPage] = useState(0)
   const [hasNext, setHasNext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [keyword, setKeyword] = useState('')
-  const [category, setCategory] = useState<'ALL' | PostDetailResponse['category']>('ALL')
+  const [category, setCategory] = useState<'ALL' | PostDetailResponse['category']>(
+    requestedCategory === 'MAIN_DISH' || requestedCategory === 'DESSERT'
+      ? requestedCategory
+      : 'ALL',
+  )
   const [sort, setSort] = useState<'latest' | 'popular'>('latest')
 
   const normalizedKeyword = keyword.trim().toLocaleLowerCase()
@@ -73,6 +79,15 @@ export function BoardPage() {
     }
   }
 
+  const changeCategory = (value: 'ALL' | PostDetailResponse['category']) => {
+    setCategory(value)
+    if (value === 'ALL') {
+      setSearchParams({})
+    } else {
+      setSearchParams({ category: value })
+    }
+  }
+
   return (
     <main className="px-4 pb-10">
       <div className="mb-5 flex items-center gap-3">
@@ -116,7 +131,7 @@ export function BoardPage() {
             <button
               key={value}
               type="button"
-              onClick={() => setCategory(value)}
+              onClick={() => changeCategory(value)}
               aria-pressed={category === value}
               className={`caption2-medium h-8 rounded-full border px-3 ${category === value ? 'border-main text-main' : 'border-gray2 text-gray3'}`}
             >
