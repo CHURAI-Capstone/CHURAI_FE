@@ -29,6 +29,7 @@ export function ExplorePage() {
   const [recentPosts, setRecentPosts] = useState<PostDetailResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -47,7 +48,13 @@ export function ExplorePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [retryKey])
+
+  const retry = () => {
+    setHasError(false)
+    setIsLoading(true)
+    setRetryKey((current) => current + 1)
+  }
 
   const addIngredient = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -175,7 +182,12 @@ export function ExplorePage() {
           </button>
         </div>
         {isLoading && <p className="caption1-medium text-gray3 py-4 text-center">불러오는 중...</p>}
-        {hasError && <p className="caption1-medium text-main py-4 text-center" role="alert">레시피를 불러오지 못했습니다.</p>}
+        {hasError && (
+          <div className="py-4 text-center">
+            <p className="caption1-medium text-main" role="alert">레시피를 불러오지 못했습니다.</p>
+            <button type="button" onClick={retry} className="caption1-semibold text-main mt-2">다시 시도</button>
+          </div>
+        )}
         {!isLoading && !hasError && recentPosts.length === 0 && (
           <p className="caption1-medium text-gray3 py-4 text-center">등록된 레시피가 없습니다.</p>
         )}

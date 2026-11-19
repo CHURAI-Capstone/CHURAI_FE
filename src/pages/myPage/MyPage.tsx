@@ -252,6 +252,17 @@ export function MyPage() {
       <section className="mt-4 rounded-2xl bg-white px-5 py-2 shadow-sm">
         <button
           type="button"
+          onClick={() => navigate(routePaths.myActivity)}
+          className="flex w-full items-center justify-between border-b border-gray1 py-4 text-left"
+        >
+          <span>
+            <strong className="caption1-semibold block">내 활동</strong>
+            <span className="caption2-regular text-gray3">작성한 꿀조합과 반응을 확인해보세요.</span>
+          </span>
+          <ChevronIcon className="text-gray2 h-5 w-5" />
+        </button>
+        <button
+          type="button"
           onClick={() => navigate(routePaths.board)}
           className="flex w-full items-center justify-between py-4 text-left"
         >

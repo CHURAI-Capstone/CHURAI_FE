@@ -9,6 +9,7 @@ import { BoardEditPage } from '@/pages/boardEdit/BoardEditPage'
 import { HomePage } from '@/pages/home/HomePage'
 import { ExplorePage } from '@/pages/explore/ExplorePage'
 import { LoginPage } from '@/pages/login/LoginPage'
+import { MyActivityPage } from '@/pages/myActivity/MyActivityPage'
 import { MyPage } from '@/pages/myPage/MyPage'
 import { RankingPage } from '@/pages/ranking/RankingPage'
 import { SearchPage } from '@/pages/search/SearchPage'
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
           {
             path: routePaths.myPage,
             element: <MyPage />,
+          },
+          {
+            path: routePaths.myActivity,
+            element: <MyActivityPage />,
           },
           {
             path: routePaths.ranking,

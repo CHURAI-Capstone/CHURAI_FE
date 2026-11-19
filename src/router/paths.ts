@@ -11,5 +11,6 @@ export const routePaths = {
   postCreate: '/posts/new',
   postEdit: '/posts/:postId/edit',
   myPage: '/mypage',
+  myActivity: '/mypage/activity',
   ranking: '/rankings',
 } as const
