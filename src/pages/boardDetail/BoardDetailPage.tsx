@@ -25,6 +25,7 @@ import { getAuthErrorMessage } from '@/features/auth/getAuthErrorMessage'
 import { getAccessToken } from '@/features/auth/tokenStorage'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { routePaths } from '@/router/paths'
+import { CommentsSection } from './CommentsSection'
 
 const CATEGORY_LABEL = {
   MAIN_DISH: '식사류',
@@ -95,7 +96,7 @@ export function BoardDetailPage() {
   const [isScrapPending, setIsScrapPending] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
   const isValidPostId =
-    Boolean(postId) && Number.isInteger(numericPostId) && numericPostId > 0
+    postId !== undefined && /^\d+$/.test(postId) && Number.isSafeInteger(numericPostId) && numericPostId > 0
 
   useDocumentTitle(
     post ? `${post.title} | CHURAI` : '꿀조합 상세 | CHURAI',
@@ -192,6 +193,12 @@ export function BoardDetailPage() {
     setIsLoading(true)
     setIsReactionLoading(true)
     setReloadKey((currentKey) => currentKey + 1)
+  }
+
+  const refreshPost = async () => {
+    if (!postId) return
+    const updated = await getPostDetail(postId)
+    setPost(updated)
   }
 
   const handleDelete = async () => {
@@ -525,6 +532,14 @@ export function BoardDetailPage() {
             <EmptyInfo text="등록된 태그가 없습니다." />
           )}
         </InfoSection>
+
+        <CommentsSection
+          postId={String(post.id)}
+          comments={post.comments}
+          count={post.commentCount}
+          currentUserId={currentUserId}
+          onRefresh={refreshPost}
+        />
       </div>
     </main>
   )

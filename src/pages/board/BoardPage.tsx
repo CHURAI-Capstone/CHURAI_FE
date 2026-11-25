@@ -24,6 +24,7 @@ export function BoardPage() {
   const [hasNext, setHasNext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [retryKey, setRetryKey] = useState(0)
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState<'ALL' | PostDetailResponse['category']>(
     requestedCategory === 'MAIN_DISH' || requestedCategory === 'DESSERT'
@@ -59,7 +60,13 @@ export function BoardPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [retryKey])
+
+  const retry = () => {
+    setErrorMessage('')
+    setIsLoading(true)
+    setRetryKey((current) => current + 1)
+  }
 
   const loadMore = async () => {
     if (isLoading || !hasNext) return
@@ -176,7 +183,12 @@ export function BoardPage() {
       {!isLoading && !errorMessage && posts.length > 0 && visiblePosts.length === 0 && (
         <p className="caption1-medium text-gray3 py-5 text-center">일치하는 레시피가 없습니다.</p>
       )}
-      {errorMessage && <p className="caption1-medium text-main py-5 text-center" role="alert">{errorMessage}</p>}
+      {errorMessage && (
+        <div className="py-5 text-center">
+          <p className="caption1-medium text-main" role="alert">{errorMessage}</p>
+          {posts.length === 0 && <button type="button" onClick={retry} className="caption1-semibold text-main mt-3">다시 시도</button>}
+        </div>
+      )}
       {hasNext && (
         <button
           type="button"
