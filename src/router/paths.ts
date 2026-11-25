@@ -1,0 +1,16 @@
+export const routePaths = {
+  home: '/',
+  login: '/login',
+  signup: '/signup',
+  search: '/search',
+  board: '/board',
+  explore: '/explore',
+  boardCreate: '/boardCreate',
+  posts: '/posts',
+  postDetail: '/posts/:postId',
+  postCreate: '/posts/new',
+  postEdit: '/posts/:postId/edit',
+  myPage: '/mypage',
+  myActivity: '/mypage/activity',
+  ranking: '/rankings',
+} as const

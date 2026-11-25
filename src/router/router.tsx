@@ -1,0 +1,78 @@
+import { createBrowserRouter } from 'react-router-dom'
+
+import { AppLayout } from '@/components/layout/AppLayout'
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
+import { BoardCreatePage } from '@/pages/boardCreate/BoardCreatePage'
+import { BoardPage } from '@/pages/board/BoardPage'
+import { BoardDetailPage } from '@/pages/boardDetail/BoardDetailPage'
+import { BoardEditPage } from '@/pages/boardEdit/BoardEditPage'
+import { HomePage } from '@/pages/home/HomePage'
+import { ExplorePage } from '@/pages/explore/ExplorePage'
+import { LoginPage } from '@/pages/login/LoginPage'
+import { MyActivityPage } from '@/pages/myActivity/MyActivityPage'
+import { MyPage } from '@/pages/myPage/MyPage'
+import { RankingPage } from '@/pages/ranking/RankingPage'
+import { SearchPage } from '@/pages/search/SearchPage'
+import { SignupPage } from '@/pages/signup/SignupPage'
+import { routePaths } from '@/router/paths'
+
+export const router = createBrowserRouter([
+  {
+    path: routePaths.login,
+    element: <LoginPage />,
+  },
+  {
+    path: routePaths.signup,
+    element: <SignupPage />,
+  },
+  {
+    path: routePaths.postDetail,
+    element: <BoardDetailPage />,
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          {
+            path: routePaths.home,
+            element: <HomePage />,
+          },
+          {
+            path: routePaths.boardCreate,
+            element: <BoardCreatePage />,
+          },
+          {
+            path: routePaths.board,
+            element: <BoardPage />,
+          },
+          {
+            path: routePaths.explore,
+            element: <ExplorePage />,
+          },
+          {
+            path: routePaths.search,
+            element: <SearchPage />,
+          },
+          {
+            path: routePaths.myPage,
+            element: <MyPage />,
+          },
+          {
+            path: routePaths.myActivity,
+            element: <MyActivityPage />,
+          },
+          {
+            path: routePaths.ranking,
+            element: <RankingPage />,
+          },
+          {
+            path: routePaths.postEdit,
+            element: <BoardEditPage />,
+          },
+        ],
+      },
+    ],
+  },
+])
