@@ -76,6 +76,18 @@ export function HomePage() {
     <main className="px-3 pb-24">
       <HeroBanner onCreate={() => navigate(routePaths.boardCreate)} />
 
+      <button
+        type="button"
+        onClick={() => navigate(routePaths.aiRecommendations)}
+        className="border-gray1 mt-4 flex w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3 text-left shadow-sm"
+      >
+        <span className="min-w-0">
+          <strong className="caption1-semibold text-main block">AI가 골라주는 나만의 꿀조합 ✨</strong>
+          <span className="caption2-regular text-gray4 mt-1 block">오늘 뭐 먹을지 고민된다면? 취향을 말해보세요!</span>
+        </span>
+        <span className="caption2-medium text-main shrink-0">AI 추천받기 →</span>
+      </button>
+
       <HomeSection
         title="지금 인기 있는 꿀조합"
         description="츄라이에서 가장 주목받는 조합이에요"

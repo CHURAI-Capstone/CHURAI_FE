@@ -13,4 +13,5 @@ export const routePaths = {
   myPage: '/mypage',
   myActivity: '/mypage/activity',
   ranking: '/rankings',
+  aiRecommendations: '/ai/recommendations',
 } as const
