@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/AppLayout'
+import { AiRecommendationPage } from '@/pages/aiRecommendation/AiRecommendationPage'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { BoardCreatePage } from '@/pages/boardCreate/BoardCreatePage'
 import { BoardPage } from '@/pages/board/BoardPage'
@@ -66,6 +67,10 @@ export const router = createBrowserRouter([
           {
             path: routePaths.ranking,
             element: <RankingPage />,
+          },
+          {
+            path: routePaths.aiRecommendations,
+            element: <AiRecommendationPage />,
           },
           {
             path: routePaths.postEdit,
